@@ -714,7 +714,6 @@ static void* ctrl_thread(void* p)
 
           //pause
           case SNAPHOSE_CTRL_PAUSE:
-            drain = true;
             state = SNAPHOSE_PAUSE;
             break;
           case SNAPHOSE_CTRL_DIE:
@@ -763,7 +762,6 @@ static void*  read_thread(void *)
 
     while ( state < SNAPHOSE_RUN)
     {
-
        // not taking data , sleep for one ms
        usleep(1000);
     }
@@ -787,6 +785,9 @@ static void*  read_thread(void *)
         drain = false;
       }
 
+
+      // check if not running
+      if (state != SNAPHOSE_RUN) continue;
 
 
       //now loop through blocks to see if anything is ready
@@ -852,11 +853,12 @@ static void*  read_thread(void *)
           //commit buffer and grab another
           buffer_commit();
           d = buffer_acquire();
+          if (state != SNAPHOSE_RUN) break;
         }
       }
 
       //sleep 200 us
-      usleep(200);
+      if (state == SNAPHOSE_RUN) usleep(200);
     }
   }
   return NULL;

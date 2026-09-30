@@ -1,5 +1,14 @@
 CC?=gcc
-CFLAGS?=-Os -g -Wall -Werror -pedantic -fanalyzer -fPIC
+CFLAGS?=-Os -g -Wall -Werror -pedantic
+EXTRA_CFLAGS=-fPIC -fanalyzer
+
+# because an older compiler might not support everything grumble,grumble
+define check_cc_flag
+  $(shell echo 'int main() { return 0; }' | $(CC) $(1) -xc - 2>/dev/null && echo $(1))
+endef
+
+CFLAGS+=$(foreach flag,$(EXTRA_CFLAGS),$(call check_cc_flag,$(flag)))
+
 SNAPHOSE_LIBS?=-lsystemd -lm
 PREFIX?=/usr/local
 ETC?=/etc

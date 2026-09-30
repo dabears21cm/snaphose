@@ -1,6 +1,6 @@
 CC?=gcc
 CFLAGS?=-Os -g -Wall -Werror -pedantic
-EXTRA_CFLAGS=-fPIC -fanalyzer -march=native
+EXTRA_CFLAGS=-fPIC -fanalyzer -march=native -pthread
 
 # because an older compiler might not support everything grumble,grumble
 define check_cc_flag
@@ -9,7 +9,7 @@ endef
 
 CFLAGS+=$(foreach flag,$(EXTRA_CFLAGS),$(call check_cc_flag,$(flag)))
 
-SNAPHOSE_LIBS?=-lsystemd -lm
+SNAPHOSE_LIBS?=-lsystemd -lm -lpthread
 PREFIX?=/usr/local
 ETC?=/etc
 

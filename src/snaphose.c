@@ -812,7 +812,7 @@ static void*  read_thread(void * v)
 
         uint32_t status = 0;
         read_reg(setup[isnap].status, &status);
-        if (status & SNAP_STATUS_DONE)
+        if (!(status & SNAP_STATUS_DONE))
         {
 
           struct timespec now_rt;

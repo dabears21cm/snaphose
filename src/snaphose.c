@@ -821,7 +821,6 @@ static void*  read_thread(void * v)
           // read various registers ASAP
 
           read_reg(reg.pps_counter, &d->pps_count_at_read_time);
-          read_reg(reg.clk_cnts, &d->last_pps_at_read_time);
           read_reg(reg.pps_duration, &d->last_pps_duration);
 
 

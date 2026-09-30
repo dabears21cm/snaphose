@@ -7,6 +7,7 @@
 
 // this defines the on-wire data format, which is also needed by the receiver!
 
+#define VER_MAGIC 0x5150
 
 // Used for TCP
 enum e_snaphose_ctrl_chars
@@ -37,6 +38,10 @@ typedef struct snaphose_tm
 
 typedef struct snaphose_data
 {
+ uint16_t ver_magic;
+
+ uint16_t accum_length;
+
   // Number of frequency bins
  uint16_t nfreqbins;
  // Number of bits representing each bin
@@ -48,10 +53,8 @@ typedef struct snaphose_data
  // Total number of snaps read
  uint32_t read_counter;
 
-
  // Information about firmware
  uint32_t fw_rev;
- uint32_t accum_length;
 
  // CPU time that this reaodut happened
  snaphost_tm_t readout_cpu_time;
@@ -66,10 +69,8 @@ typedef struct snaphose_data
  uint32_t snap_cycle_count;
 
  // The pps count at time of reading this snap
+ //   (could have cycled over)
  uint32_t pps_count_at_read_time;
-
- // The time of the last pps at read time (could be NEXT pps if greater than cycle count)
- uint32_t last_pps_at_read_time;
 
  // The number of cycles in the last pps
  uint32_t last_pps_duration;

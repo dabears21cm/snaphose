@@ -9,10 +9,10 @@ int snaphose_dump(FILE * f, const snaphose_data_t * s)
 
   int out = 0;
 
-  out += fprintf(f, " (snaphose_data_t) { .nfreqbins = %hu, .nbits_per_bin = %hhu, .snap_index = %hhu, .read_counter = %u\n, ", s->nfreqbins, s->nbits_per_bin, s->snap_index, s->read_counter);
+  out += fprintf(f, " (snaphose_data_t) { .magic = %hu, .nfreqbins = %hu, .nbits_per_bin = %hhu, .snap_index = %hhu, .read_counter = %u\n, ", s->ver_magic, s->nfreqbins, s->nbits_per_bin, s->snap_index, s->read_counter);
   out += fprintf(f, "                     .fw_rev = %x, .accum_length = %u, .readout_cpu_time = { .utc_secs = %"PRIu64", .utc_nsecs = %"PRIu64" }, \n", s->fw_rev, s->accum_length, (uint64_t) s->readout_cpu_time.utc_secs, (uint64_t) s->readout_cpu_time.utc_nsecs);
   out += fprintf(f, "                     .send_cpu_time = { .utc_secs = %"PRIu64", .utc_nsecs = %"PRIu64" }, .rcv_cpu_time = {.utc_secs = %"PRIu64", .utc_nsecs = %" PRIu64 "}, \n", (uint64_t)  s->send_cpu_time.utc_secs, (uint64_t) s->send_cpu_time.utc_nsecs,(uint64_t)  s->rcv_cpu_time.utc_secs, (uint64_t) s->rcv_cpu_time.utc_nsecs);
-  out += fprintf(f, "                     .snap_cycle_count = %u, .pps_count_at_read_time =%u, .last_pps_at_read_time = %u, .last_pps_duration=%u, \n", s->snap_cycle_count, s->pps_count_at_read_time, s->last_pps_at_read_time, s->last_pps_duration);
+  out += fprintf(f, "                     .snap_cycle_count = %u, .pps_count_at_read_time =%u, .last_pps_duration=%u, \n", s->snap_cycle_count, s->pps_count_at_read_time, s->last_pps_duration);
   out += fprintf(f, "                     .us_elapsed_while_reading = %hu, .source = { .which =  '%c',  .attenuation = %hhu},\n", s->us_elapsed_while_reading, s->source.which, s->source.attenuation);
   out += fprintf(f, "                     .hsk = {  .uptime = { .snaphose = %hu, .red_pitaya = %hu, .rpi = %hu, .snapsave = %hu},\n", s->hsk.uptime.snaphose, s->hsk.uptime.red_pitaya, s->hsk.uptime.rpi, s->hsk.uptime.snapsave);
   out += fprintf(f, "                               .rpi = { .disk_free_GiB = %"PRIu64", .fan_rpm = %"PRIu64", .rail5V_mV = %"PRIu64", .throttled = %"PRIu64", .free_mem_MB = %"PRIu64", .core_temp = %"PRIu64"},\n", (uint64_t) s->hsk.rpi.disk_free_GiB,(uint64_t)  s->hsk.rpi.fan_rpm,(uint64_t)  s->hsk.rpi.rail5V_mV,(uint64_t)  s->hsk.rpi.throttled,(uint64_t)  s->hsk.rpi.free_mem_MB,(uint64_t)  s->hsk.rpi.core_temp);

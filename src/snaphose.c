@@ -82,6 +82,7 @@ static uint32_t data_bits = 64;
 static uint32_t buffer_size = 256;
 static uint32_t buffer_size_mask = 0xff;
 static int watchdog_interval = 10;
+static uint32_t accum_len;
 
 
 static struct
@@ -622,8 +623,8 @@ static void* tx_thread(void *p)
       clock_gettime(CLOCK_REALTIME, &now_rt);
       d->nfreqbins = nsamples;
       d->nbits_per_bin = data_bits;
-      d->sys_board_id = 0; // TODO
-      d->sys_rev = 0; // TODO
+      d->fw_rev = 0; // TODO
+      d->accum_length = accum_len;
       d->hsk.uptime.snaphose = (now.tv_sec - program_start.tv_sec)/60;
       d->hsk.uptime.red_pitaya = (now.tv_sec)/60;
       d->send_cpu_time.utc_secs = now_rt.tv_sec;
@@ -759,6 +760,8 @@ static void*  read_thread(void * v)
 {
   (void) v;
   uint32_t read_counter = 0;
+
+  read_reg(reg.accum_len, &accum_len);
 
   while (state < SNAPHOSE_DIE)
   {

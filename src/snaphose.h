@@ -42,7 +42,7 @@ typedef struct snaphose_data
  // Number of bits representing each bin
  uint8_t nbits_per_bin;
 
- // Index of the snap used (0 = 'A') 
+ // Index of the snap used (0 = 'A')
  uint8_t snap_index;
 
  // Total number of snaps read
@@ -50,8 +50,8 @@ typedef struct snaphose_data
 
 
  // Information about firmware
- uint32_t sys_board_id;
- uint32_t sys_rev;
+ uint32_t fw_rev;
+ uint32_t accum_length;
 
  // CPU time that this reaodut happened
  snaphost_tm_t readout_cpu_time;

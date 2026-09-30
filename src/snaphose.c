@@ -723,9 +723,11 @@ static void* ctrl_thread(void* p)
           case '\n':
           case '\r':
           case '\t':
+          case (unsigned char) EOF:
             break; // ignore ws
           default:
-            fprintf(stderr," Unrecognized cmd\n");
+            fprintf(stderr," Unrecognized cmd (%c)\n", cmd);
+            break;
 
         }
       }

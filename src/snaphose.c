@@ -418,8 +418,8 @@ int main(int nargs, char ** args)
 
   //mmap the FPGA
 
-  int dev_mem_fd = open("/dev/men", O_RDWR | O_SYNC);
-  if (!dev_mem_fd)
+  int dev_mem_fd = open("/dev/mem", O_RDWR | O_SYNC);
+  if (dev_mem_fd < 0)
   {
     fprintf(stderr,"Failed to open /dev/mem\n");
     ret = 1;

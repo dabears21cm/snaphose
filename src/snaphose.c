@@ -702,6 +702,11 @@ static void* ctrl_thread(void* p)
           fprintf(stderr,"CTRL THREAD: Got err %d (%s) in recv\n", errno, strerror(errno));
           continue;
         }
+        if (r == 0)
+        {
+          printf("Client disconnected?\n");
+          break;
+        }
         printf("CMD: %c\n", cmd);
         // avoid CSWTCH generation due to static analyzer bug
         volatile unsigned char ucmd = cmd;
@@ -735,7 +740,7 @@ static void* ctrl_thread(void* p)
           case (unsigned char) EOF:
             break; // ignore ws
           default:
-            fprintf(stderr," Unrecognized cmd (%c)\n", cmd);
+            fprintf(stderr," Unrecognized cmd (%c/%hhx)\n", cmd,ucmd);
             break;
 
         }

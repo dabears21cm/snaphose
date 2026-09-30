@@ -431,7 +431,7 @@ int main(int nargs, char ** args)
 
   if (!fpga || errno)
   {
-    fprintf(stderr,"Failed to mmap FPGA (%d)\n", errno);
+    fprintf(stderr,"Failed to mmap FPGA (%d, %s)\n", errno, strerror(errno));
     ret = 1;
     goto cleanup;
   }

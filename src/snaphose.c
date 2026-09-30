@@ -70,6 +70,14 @@ static int read_reg(uint32_t address, uint32_t * val)
    return 0;
 }
 
+// for GDB usage using unadjusted values
+__attribute__((used))
+static uint32_t read_reg_dbg(uint32_t address)
+{
+  uint32_t val = 0;
+  read_reg(address-FPGA_MEM_BASE,&val);
+  return val;
+}
 
 // configuration options, read from file, or possibly overwritten by command line in a few cases
 static short dest_port;

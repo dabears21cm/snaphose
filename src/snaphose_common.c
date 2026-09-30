@@ -1,6 +1,7 @@
 #include "snaphose.h"
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include <inttypes.h>
 
 int snaphose_dump(FILE * f, const snaphose_data_t * s)
@@ -17,12 +18,20 @@ int snaphose_dump(FILE * f, const snaphose_data_t * s)
   out += fprintf(f, "                               .rpi = { .disk_free_GiB = %"PRIu64", .fan_rpm = %"PRIu64", .rail5V_mV = %"PRIu64", .throttled = %"PRIu64", .free_mem_MB = %"PRIu64", .core_temp = %"PRIu64"},\n", (uint64_t) s->hsk.rpi.disk_free_GiB,(uint64_t)  s->hsk.rpi.fan_rpm,(uint64_t)  s->hsk.rpi.rail5V_mV,(uint64_t)  s->hsk.rpi.throttled,(uint64_t)  s->hsk.rpi.free_mem_MB,(uint64_t)  s->hsk.rpi.core_temp);
   out += fprintf(f, "                               .temps = { .red_pitaya = %hhd, .w1_probe = %hhd, .cal_board = %hhd, .ssd = %hhd},\n", s->hsk.temps.red_pitaya, s->hsk.temps.w1_probe, s->hsk.temps.cal_board, s->hsk.temps.ssd);
   out += fprintf(f, "                             },\n");
+  out += fprintf(f, "                     .samples_dB = {\n");
+  out += fprintf(f, "                        ");
 
+  for (int i = 0; i < s->nfreqbins; i++)
+  {
+    uint64_t val = snaphose_nth_sample_u64(s,i);
+    double dB = 10 * log10(val);
+    out += fprintf(f, "%0.3f,", dB);
+    if (i % 8 == 0) out += fprintf(f, "\n                        ");
+  }
 
-
+  out += fprintf(f, "                               }\n");
+  out += fprintf(f, "                  };\n");
   return out;
-
-
 }
 
 

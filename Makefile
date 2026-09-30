@@ -1,6 +1,6 @@
 CC?=gcc
 CFLAGS?=-Os -g -Wall -Werror -pedantic -fanalyzer -fPIC
-SNAPHOSE_LIBS?=-lsystemd
+SNAPHOSE_LIBS?=-lsystemd -lm
 PREFIX?=/usr/local
 ETC?=/etc
 

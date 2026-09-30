@@ -94,7 +94,7 @@ int snaphose_unpack_samples_f32(const snaphose_data_t * s,  uint32_t dest_sz,  f
       __builtin_memcpy(&dest[i], &result, sizeof(float_half_vec));
     }
 #else
-#pragma message a newer compiler would help you unpack data faster
+#pragma message ("a newer compiler would help you unpack data faster")
 #endif
 
     //cleanup loop

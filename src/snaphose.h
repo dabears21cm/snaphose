@@ -54,7 +54,7 @@ typedef struct snaphose_data
  uint32_t sys_rev;
 
  // CPU time that this reaodut happened
- snaphost_tm_t readout_cputime;
+ snaphost_tm_t readout_cpu_time;
 
  // CPU time that this readout was sent
  snaphost_tm_t send_cpu_time;
@@ -121,16 +121,54 @@ typedef struct snaphose_data
   //for shit we forget
   uint64_t reserved[4];
 
-  //make sure word-aligned
-  _Alignas(4) uint8_t packed_samples[]; //packed samples, rounded up to nearest multiple of 64
+  //make sure double-word-aligned
+  _Alignas(8) uint8_t packed_samples[]; //packed samples, rounded up to nearest cacheline of 64
 } snaphose_data_t;
 
-// product gives total in bits, we add 63 the nshift by 9 to convert to number of  64-bit words (512 bits/word) needed, then shift by 6 to get back to bytes
+// product gives total in bits, we add 63 the nshift by 9 to convert to number of  cacheliness (512 bits/word) needed, then shift by 6 to get back to bytes
 #define SNAPHOSE_PACKED_DATA_SIZE(NUM_BITS, NUM_SAMPLES)   ((((NUM_BITS * NUM_SAMPLES) + 63) >> 9) << 6)
 #define SNAPHOSE_DATA_SIZE_NEEDED(NUM_BITS, NUM_SAMPLES)  sizeof(snaphose_data_t) + SNAPHOSE_PACKED_DATA_SIZE(NUM_BITS, NUM_SAMPLES)
 
 
 int snaphose_dump(FILE * f, const snaphose_data_t * s);
+
+
+static inline uint64_t snaphose_nth_sample_u64(const snaphose_data_t *s, size_t i)
+{
+  if (i >= s->nfreqbins)  return (uint64_t) -1;
+
+  switch (s->nbits_per_bin)
+  {
+    case 64:
+      return ((uint64_t*) s->packed_samples)[i];
+    case 32:
+      return ((uint32_t*) s->packed_samples)[i];
+    case 16:
+      return ((uint16_t*) s->packed_samples)[i];
+    case 8:
+      return s->packed_samples[i];
+    default:
+      break;
+  }
+  // If we ever ahave nbits_per_in not 64, we should check/optimize this
+  //
+  uint64_t val = 0;
+
+
+  size_t bin = (i * s->nbits_per_bin) >>6;
+  uint8_t start_bit = (i * s->nbits_per_bin) % 64;
+  uint8_t bits_first_double_word = (s->nbits_per_bin - start_bit) % 64;
+  uint8_t bits_second_double_word = bits_first_double_word == s->nbits_per_bin ? 0 : s->nbits_per_bin - bits_first_double_word;
+  val = (((uint64_t*) s->packed_samples)[bin] >> start_bit); 
+  val &= (bits_first_double_word ==64) ?  UINT64_MAX :  ( 1 << bits_first_double_word) -1;
+
+  if (bits_second_double_word) 
+    val += (((uint64_t*) s->packed_samples)[bin] & ((1 << bits_second_double_word)-1)) << bits_first_double_word;
+
+  val |= (1 << bits_second_double_word) -1;
+
+  return val;
+}
 
 /** Unpack samples to a 64-bit array */
 int snaphose_unpack_samples_u64(const snaphose_data_t * s,  uint32_t dest_sz,  uint64_t  * dest);

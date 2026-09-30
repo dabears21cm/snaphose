@@ -844,10 +844,10 @@ static void*  read_thread(void *)
 
           d->source.which = source;
           d->read_counter = read_counter++;
-          d->readout_cputime.utc_secs = now_rt.tv_sec;
-          d->readout_cputime.utc_nsecs = now_rt.tv_nsec;
+          d->readout_cpu_time.utc_secs = now_rt.tv_sec;
+          d->readout_cpu_time.utc_nsecs = now_rt.tv_nsec;
           clock_gettime(CLOCK_REALTIME, &now_rt);
-          uint32_t us =  1e6* ( now_rt.tv_sec-d->readout_cputime.utc_secs) + 1e-3 * ( now_rt.tv_nsec - d->readout_cputime.utc_nsecs);
+          uint32_t us =  1e6* ( now_rt.tv_sec-d->readout_cpu_time.utc_secs) + 1e-3 * ( now_rt.tv_nsec - d->readout_cpu_time.utc_nsecs);
           d->us_elapsed_while_reading = us > 65535 ? 65535 : us;
 
           //commit buffer and grab another

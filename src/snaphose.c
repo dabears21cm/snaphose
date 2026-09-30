@@ -760,7 +760,7 @@ static int snap_arm(size_t i)
 {
   if (verbose) printf("snap %zu arming\n",i);
   return write_reg(setup[i].ctrl, setup[i].ctrl_flags & ~SNAP_CTRL_ENABLE)
-  || write_reg(setup[i].ctrl, setup[i].ctrl_flags & ~SNAP_CTRL_ENABLE);
+  || write_reg(setup[i].ctrl, setup[i].ctrl_flags & SNAP_CTRL_ENABLE);
 }
 
 

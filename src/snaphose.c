@@ -582,12 +582,12 @@ static float hsk_get_##WHAT##_iio##II0DEV() {\
     uint32_t raw=0; uint32_t offset=0; float scale=1; \
     FILE* f  = fopen(HSK_PATH(WHAT,IIODEV,_raw),"r");\
     if (!f) { fprintf(stderr,"Could not open "  HSK_PATH(WHAT,IIODEV,_RAW) "\n"); return -999; }\
-    fscanf(f,"%u", &raw);\
+    if (1!=fscanf(f,"%u", &raw)) fprintf(stderr,"parse error on raw");;\
     fclose(f);\
     f  = fopen(HSK_PATH(WHAT,IIODEV,_offset),"r");\
-    if (f) { fscanf(f,"%u", &offset); fclose(f); }\
+    if (f) { if (1!=fscanf(f,"%u", &offset)) {fprintf(stderr,"parse error on offset");} fclose(f); }\
     f  = fopen(HSK_PATH(WHAT,IIODEV,_scale),"r");\
-    if (f) { fscanf(f,"%f", &scale); fclose(f); } \
+    if (f) { if (1!=fscanf(f,"%f", &scale)) {fprintf(stderr,"parse error on scale");} fclose(f); }\
     return (raw-offset)/scale;\
 }
 
@@ -753,8 +753,9 @@ static int snap_arm(size_t i)
 }
 
 
-static void*  read_thread(void *)
+static void*  read_thread(void * v)
 {
+  (void) v;
   uint32_t read_counter = 0;
 
   while (state < SNAPHOSE_DIE)

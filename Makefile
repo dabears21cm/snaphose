@@ -1,6 +1,6 @@
 CC?=gcc
 CFLAGS?=-Os -g -Wall -Werror -pedantic
-EXTRA_CFLAGS=-fPIC -fanalyzer
+EXTRA_CFLAGS=-fPIC -fanalyzer -march=native
 
 # because an older compiler might not support everything grumble,grumble
 define check_cc_flag

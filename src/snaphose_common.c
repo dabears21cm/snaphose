@@ -84,6 +84,7 @@ int snaphose_unpack_samples_f32(const snaphose_data_t * s,  uint32_t dest_sz,  f
     uint32_t i = 0;
     uint64_t * as_u64 = (uint64_t *) s->packed_samples;
 
+#if (__GNUC__ > 8)
 #pragma GCC unroll 4
     for (; i <= dest_sz; i+=  (SIMD_BYTES / 8))
     {
@@ -92,6 +93,9 @@ int snaphose_unpack_samples_f32(const snaphose_data_t * s,  uint32_t dest_sz,  f
       float_half_vec result = __builtin_convertvector(chunk, float_half_vec);
       __builtin_memcpy(&dest[i], &result, sizeof(float_half_vec));
     }
+#else
+#pragma message a newer compiler would help you unpack data faster
+#endif
 
     //cleanup loop
     for (; i < dest_sz; i++) dest[i] = (float) as_u64[i];
@@ -101,6 +105,7 @@ int snaphose_unpack_samples_f32(const snaphose_data_t * s,  uint32_t dest_sz,  f
     uint32_t i = 0;
     uint32_t * as_u32 = (uint32_t *) s->packed_samples;
 
+#if (__GNUC__ > 8)
 #pragma GCC unroll 4
     for (; i <= dest_sz; i+=  (SIMD_BYTES / 4))
     {
@@ -109,7 +114,7 @@ int snaphose_unpack_samples_f32(const snaphose_data_t * s,  uint32_t dest_sz,  f
       float_vec result = __builtin_convertvector(chunk, float_vec);
       __builtin_memcpy(&dest[i], &result, sizeof(float_vec));
     }
-
+#endif
     //cleanup loop
     for (; i < dest_sz; i++) dest[i] = (float) as_u32[i];
   }
@@ -131,6 +136,7 @@ int snaphose_unpack_samples_f64(const snaphose_data_t * s ,  uint32_t dest_sz,  
     uint32_t i = 0;
     uint64_t * as_u64 = (uint64_t *) s->packed_samples;
 
+#if (__GNUC__ > 8)
 #pragma GCC unroll 4
     for (; i <= dest_sz; i+=  (SIMD_BYTES / 8))
     {
@@ -140,7 +146,8 @@ int snaphose_unpack_samples_f64(const snaphose_data_t * s ,  uint32_t dest_sz,  
       __builtin_memcpy(&dest[i], &result, sizeof(double_vec));
     }
 
-    //cleanup loop
+#endif
+    //cleanup loop (or old compilers)
     for (; i < dest_sz; i++) dest[i] = (double) as_u64[i];
   }
   else if (s->nbits_per_bin == 32)
@@ -148,6 +155,7 @@ int snaphose_unpack_samples_f64(const snaphose_data_t * s ,  uint32_t dest_sz,  
     uint32_t i = 0;
     uint32_t * as_u32 = (uint32_t *) s->packed_samples;
 
+#if (__GNUC__ > 8)
 #pragma GCC unroll 4
     for (; i <= dest_sz; i+=  (SIMD_BYTES / 4))
     {
@@ -156,6 +164,7 @@ int snaphose_unpack_samples_f64(const snaphose_data_t * s ,  uint32_t dest_sz,  
       double_vec result = __builtin_convertvector(chunk, double_vec);
       __builtin_memcpy(&dest[i], &result, sizeof(double_vec));
     }
+#endif
 
     //cleanup loop
     for (; i < dest_sz; i++) dest[i] = (double) as_u32[i];

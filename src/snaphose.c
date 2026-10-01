@@ -355,7 +355,7 @@ static void buffer_drop()
 {
 
   size_t current_written = atomic_load_explicit(&buffer_written_shared, memory_order_acquire);
-  size_t current_read = atomic_load_explicit(&buffer_written_shared, memory_order_relaxed);
+  size_t current_read = atomic_load_explicit(&buffer_read_shared, memory_order_relaxed);
 
   // nothing to dropp
   if (current_written == current_read) return;

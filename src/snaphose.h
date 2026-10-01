@@ -123,6 +123,7 @@ typedef struct snaphose_data
   uint64_t reserved[4];
 
   //make sure double-word-aligned
+  //WARNING, THIS IS BIG-ENDIAN!!!  (the helper functions should fix that)
   _Alignas(8) uint8_t packed_samples[]; //packed samples, rounded up to nearest cacheline of 64
 } snaphose_data_t;
 
@@ -141,11 +142,11 @@ static inline uint64_t snaphose_nth_sample_u64(const snaphose_data_t *s, size_t 
   switch (s->nbits_per_bin)
   {
     case 64:
-      return ((uint64_t*) s->packed_samples)[i];
+      return __builtin_bswap64(((uint64_t*) s->packed_samples)[i]);
     case 32:
-      return ((uint32_t*) s->packed_samples)[i];
+      return __builtin_bswap32(((uint32_t*) s->packed_samples)[i]);
     case 16:
-      return ((uint16_t*) s->packed_samples)[i];
+      return __builtin_bswap16(((uint16_t*) s->packed_samples)[i]);
     case 8:
       return s->packed_samples[i];
     default:
@@ -163,12 +164,12 @@ static inline uint64_t snaphose_nth_sample_u64(const snaphose_data_t *s, size_t 
   val = (((uint64_t*) s->packed_samples)[bin] >> start_bit); 
   val &= (bits_first_double_word ==64) ?  UINT64_MAX :  ( 1 << bits_first_double_word) -1;
 
-  if (bits_second_double_word) 
+  if (bits_second_double_word)
     val += (((uint64_t*) s->packed_samples)[bin] & ((1 << bits_second_double_word)-1)) << bits_first_double_word;
 
   val |= (1 << bits_second_double_word) -1;
 
-  return val;
+  return __builtin_bswap64(val);
 }
 
 /** Unpack samples to a 64-bit array */

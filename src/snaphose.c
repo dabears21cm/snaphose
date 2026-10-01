@@ -313,7 +313,7 @@ static snaphose_data_t * buffer_retrieve()
   size_t current_written, current_read;
 
   current_written = atomic_load_explicit(&buffer_written_shared, memory_order_acquire);
-  current_read = atomic_load_explicit(&buffer_written_shared, memory_order_relaxed);
+  current_read = atomic_load_explicit(&buffer_read_shared, memory_order_relaxed);
   if (current_read == current_written) return NULL;
 
   size_t idx = current_read & buffer_size_mask;
@@ -327,7 +327,7 @@ static snaphose_data_t * buffer_acquire()
   while (true)
   {
     current_written = atomic_load_explicit(&buffer_written_shared, memory_order_relaxed);
-    current_read = atomic_load_explicit(&buffer_written_shared, memory_order_acquire);
+    current_read = atomic_load_explicit(&buffer_read_shared, memory_order_acquire);
 
     if (current_written-current_read < buffer_size)
     {

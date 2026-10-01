@@ -32,6 +32,7 @@ struct snap_setup
 {
   uint32_t ctrl;
   uint32_t status;
+  uint32_t arm;
   uint32_t bram;
   uint32_t val;
   uint32_t ctrl_flags;  // 0 for now, I think?
@@ -212,6 +213,7 @@ static int setup_handler(void * user, const char * section, const char * name, c
       else PARSE_SNAP(status)
       else PARSE_SNAP(bram)
       else PARSE_SNAP(val)
+      else PARSE_SNAP(arm)
       else
       {
         fprintf(stderr,"Invalid key %s in %s\n", name, section);
@@ -763,8 +765,9 @@ static void* ctrl_thread(void* p)
 static int snap_arm(size_t i)
 {
   if (verbose) printf("snap %zu arming\n",i);
-  return write_reg(setup[i].ctrl, setup[i].ctrl_flags & ~SNAP_CTRL_ENABLE)
-  || write_reg(setup[i].ctrl, setup[i].ctrl_flags & SNAP_CTRL_ENABLE);
+//  return write_reg(setup[i].ctrl, setup[i].ctrl_flags & ~SNAP_CTRL_ENABLE)
+//  || write_reg(setup[i].ctrl, setup[i].ctrl_flags & SNAP_CTRL_ENABLE) 
+  return write_reg(setup[i].arm, 0) || write_reg(setup[i].arm, 1);
 }
 
 
@@ -846,6 +849,7 @@ static void*  read_thread(void * v)
 
           volatile uint32_t * stop_word = start_word + (data_bits>>5) * nsamples;
 
+          // TODO I can handle the endianness swap here, I guess, rather than on readout? 
           for (volatile uint32_t * word = start_word; word <= stop_word; )
           {
             *output++ = *word++;

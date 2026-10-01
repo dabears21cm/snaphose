@@ -579,8 +579,7 @@ cleanup:
 
 struct
 {
-  float core_temp_iio0;
-  float core_temp_iio1;
+  float core_temp;
 } hsk;
 
 #define IIO_PATH_PREFIX  "/sys/bus/iio/devices/iio:device"
@@ -601,13 +600,11 @@ static float hsk_get_##WHAT##_iio##II0DEV() {\
 }
 
 GEN_HSK(temp0,0)
-GEN_HSK(temp0,1)
 
 // could probably cache scale/offset values...
 static void update_hsk()
 {
-  hsk.core_temp_iio0 = hsk_get_temp0_iio0();
-  hsk.core_temp_iio1 = hsk_get_temp0_iio1();
+  hsk.core_temp = hsk_get_temp0_iio0();
 }
 
 
@@ -642,7 +639,7 @@ static void* tx_thread(void *p)
         update_hsk();
         memcpy(&last_hsk_measure, &now, sizeof(now));
       }
-      d->hsk.temps.red_pitaya = hsk.core_temp_iio1; // ?? I think thi sis the right one
+      d->hsk.temps.red_pitaya = hsk.core_temp; 
 
       send(fd, d, SNAPHOSE_DATA_SIZE_NEEDED(data_bits, nsamples), 0);
       buffer_drop();

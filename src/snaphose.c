@@ -91,7 +91,8 @@ static uint32_t data_bits = 64;
 static uint32_t buffer_size = 256;
 static uint32_t buffer_size_mask = 0xff;
 static int watchdog_interval = 10;
-static uint32_t accum_len;
+static uint32_t accum_len = 2500;
+static uint32_t print_every = 0;
 
 
 static struct
@@ -188,6 +189,7 @@ static int setup_handler(void * user, const char * section, const char * name, c
   {
     if (!strcmp(name,"verbose")) return !boolish(val, &verbose);
     else if (!strcmp(name,"watchdog")) watchdog_interval = atoi(val);
+    else if (!strcmp(name,"print_every")) print_every = atoi(val);
     else
     {
       fprintf(stderr, "Unknown key %s.%s\n", section,name);
@@ -229,6 +231,7 @@ static int setup_handler(void * user, const char * section, const char * name, c
   {
     if (!strcmp(name,"addr_width")) nsamples = 1 << atoi(val); 
     else if (!strcmp(name,"data_width")) data_bits = atoi(val);
+    else if (!strcmp(name,"accum_len")) accum_len = atoi(val);
     else 
     {
       fprintf(stderr,"Invalid key %s in %s\n", name, section);
@@ -340,7 +343,7 @@ static snaphose_data_t * buffer_acquire()
     else
     {
       fprintf(stderr,"WARNING BUFFER IS FULL (%u)\n", ntimes_full++);
-      usleep(100);
+      usleep(200);
     }
   }
   size_t idx = current_written & buffer_size_mask;
@@ -619,6 +622,7 @@ static void* tx_thread(void *p)
   int fd = *((int*) p);
 
   struct timespec last_hsk_measure = { 0};
+  uint64_t nsent = 0;
 
   while (state < SNAPHOSE_DIE)
   {
@@ -646,11 +650,12 @@ static void* tx_thread(void *p)
       d->hsk.temps.red_pitaya = hsk.core_temp; 
 
       send(fd, d, SNAPHOSE_DATA_SIZE_NEEDED(data_bits, nsamples), 0);
+      if (print_every && ((print_every % nsent) == 0)) snaphose_dump(stdout, d);
+      nsent++;
       buffer_drop();
     }
 
-    // update hsk every once in a while
-    usleep(1000);
+    usleep(100);
   }
 
   return NULL;
@@ -765,9 +770,22 @@ static void* ctrl_thread(void* p)
 static int snap_arm(size_t i)
 {
   if (verbose) printf("snap %zu arming\n",i);
-  return write_reg(setup[i].ctrl, setup[i].ctrl_flags & ~SNAP_CTRL_ENABLE)
-  || write_reg(setup[i].ctrl, setup[i].ctrl_flags & SNAP_CTRL_ENABLE) 
-  ||  write_reg(setup[i].arm, 0) || write_reg(setup[i].arm, 1);
+
+
+  uint32_t arm_status = (uint32_t) -1;
+  while (arm_status)
+  {
+    write_reg(setup[i].arm,0);
+    read_reg(setup[i].arm,&arm_status);
+  }
+
+  while (!arm_status)
+  {
+    write_reg(setup[i].arm,1);
+    read_reg(setup[i].arm,&arm_status);
+  }
+
+  return 0;
 }
 
 
@@ -776,6 +794,7 @@ static void*  read_thread(void * v)
   (void) v;
   uint32_t read_counter = 0;
 
+  write_reg(reg.accum_len, accum_len);
   read_reg(reg.accum_len, &accum_len);
 
   while (state < SNAPHOSE_DIE)

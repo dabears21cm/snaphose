@@ -324,10 +324,12 @@ static snaphose_data_t * buffer_acquire()
 {
 
   size_t current_written, current_read;
+  uint32_t ntimes_full = 0;
   while (true)
   {
     current_written = atomic_load_explicit(&buffer_written_shared, memory_order_relaxed);
     current_read = atomic_load_explicit(&buffer_read_shared, memory_order_acquire);
+
 
     if (current_written-current_read < buffer_size)
     {
@@ -335,7 +337,7 @@ static snaphose_data_t * buffer_acquire()
     }
     else
     {
-      fprintf(stderr,"WARNING BUFFER IS FULL");
+      fprintf(stderr,"WARNING BUFFER IS FULL (%u)\n", ntimes_full++);
       usleep(100);
     }
   }

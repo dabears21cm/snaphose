@@ -585,8 +585,8 @@ struct
 #define IIO_PATH_PREFIX  "/sys/bus/iio/devices/iio:device"
 #define HSK_PATH(WHAT,IIODEV,SUFFIX) IIO_PATH_PREFIX #IIODEV "/in_" #WHAT #SUFFIX
 
-#define GEN_HSK(WHAT,II0DEV)\
-static float hsk_get_##WHAT##_iio##II0DEV() {\
+#define GEN_HSK(WHAT,IIODEV)\
+static float hsk_get_##WHAT##_iio##IIODEV() {\
     uint32_t raw=0; uint32_t offset=0; float scale=1; \
     FILE* f  = fopen(HSK_PATH(WHAT,IIODEV,_raw),"r");\
     if (!f) { fprintf(stderr,"Could not open "  HSK_PATH(WHAT,IIODEV,_RAW) "\n"); return -999; }\

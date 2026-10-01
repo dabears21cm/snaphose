@@ -231,7 +231,7 @@ static int setup_handler(void * user, const char * section, const char * name, c
   {
     if (!strcmp(name,"addr_width")) nsamples = 1 << atoi(val); 
     else if (!strcmp(name,"data_width")) data_bits = atoi(val);
-    else if (!strcmp(name,"accum_len")) accum_len = atoi(val);
+    else if (!strcmp(name,"accum_length")) accum_len = atoi(val);
     else 
     {
       fprintf(stderr,"Invalid key %s in %s\n", name, section);

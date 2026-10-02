@@ -1,4 +1,4 @@
-#  include <stdio.h>
+#include <stdio.h>
 #include <time.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -633,6 +633,7 @@ static void* tx_thread(void *p)
       struct timespec now_rt;
       clock_gettime(CLOCK_MONOTONIC, &now);
       clock_gettime(CLOCK_REALTIME, &now_rt);
+      d->ver_magic = VER_MAGIC;
       d->nfreqbins = nsamples;
       d->nbits_per_bin = data_bits;
       d->fw_rev = 0; // TODO

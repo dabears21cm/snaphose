@@ -91,7 +91,7 @@ static uint32_t data_bits = 64;
 static uint32_t buffer_size = 256;
 static uint32_t buffer_size_mask = 0xff;
 static int watchdog_interval = 10;
-static uint32_t accum_len = 2500;
+static uint32_t accum_len = 0;
 static uint32_t print_every = 0;
 
 
@@ -231,7 +231,6 @@ static int setup_handler(void * user, const char * section, const char * name, c
   {
     if (!strcmp(name,"addr_width")) nsamples = 1 << atoi(val); 
     else if (!strcmp(name,"data_width")) data_bits = atoi(val);
-    else if (!strcmp(name,"accum_length")) accum_len = atoi(val);
     else 
     {
       fprintf(stderr,"Invalid key %s in %s\n", name, section);
@@ -794,8 +793,6 @@ static void*  read_thread(void * v)
   (void) v;
   uint32_t read_counter = 0;
 
-  write_reg(reg.accum_len, accum_len);
-  read_reg(reg.accum_len, &accum_len);
 
   while (state < SNAPHOSE_DIE)
   {
@@ -806,6 +803,7 @@ static void*  read_thread(void * v)
        usleep(1000);
     }
 
+    read_reg(reg.accum_len, &accum_len);
     size_t start_snap = 0;
     //grab an available buffer
     snaphose_data_t * d = buffer_acquire();

@@ -145,11 +145,11 @@ static inline uint64_t snaphose_nth_sample_u64(const snaphose_data_t *s, size_t 
   switch (s->nbits_per_bin)
   {
     case 64:
-      return __builtin_bswap64(((uint64_t*) s->packed_samples)[i]);
+      return (((uint64_t*) s->packed_samples)[i]);
     case 32:
-      return __builtin_bswap32(((uint32_t*) s->packed_samples)[i]);
+      return (((uint32_t*) s->packed_samples)[i]);
     case 16:
-      return __builtin_bswap16(((uint16_t*) s->packed_samples)[i]);
+      return (((uint16_t*) s->packed_samples)[i]);
     case 8:
       return s->packed_samples[i];
     default:
@@ -172,7 +172,7 @@ static inline uint64_t snaphose_nth_sample_u64(const snaphose_data_t *s, size_t 
 
   val |= (1 << bits_second_double_word) -1;
 
-  return __builtin_bswap64(val);
+  return (val);
 }
 
 /** Unpack samples to a 64-bit array */

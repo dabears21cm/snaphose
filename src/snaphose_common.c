@@ -24,7 +24,8 @@ int snaphose_dump(FILE * f, const snaphose_data_t * s)
   for (int i = 0; i < s->nfreqbins; i++)
   {
     uint64_t val = snaphose_nth_sample_u64(s,i);
-    out += fprintf(f, "0x%016lx,", val);
+    double dB = 10 * log10(val);
+    out += fprintf(f, "%0.3f,", dB);
     if (i % 8 == 0) out += fprintf(f, "\n                        ");
   }
 

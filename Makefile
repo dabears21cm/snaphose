@@ -18,12 +18,13 @@ BUILD_DIR?=build
 
 .PHONY: clean all install
 
-all: snaphose libsnaphose.so snapsave
+all: snaphose libsnaphose.so snapsave snapdump
 
 
 SNAPHOSE_OBJS=$(addprefix $(BUILD_DIR)/, snaphose.o snaphose_common.o ini.o)
 LIB_OBJS=$(addprefix $(BUILD_DIR)/,  snaphose_common.o)
 SNAPSAVE_OBJS=$(addprefix $(BUILD_DIR)/,  snapsave.o snaphose_common.o ini.o )
+SNAPDUMP_OBJS=$(addprefix $(BUILD_DIR)/,  snapdump.o snaphose_common.o )
 
 $(BUILD_DIR):
 	mkdir -p $@
@@ -39,6 +40,9 @@ snaphose: $(SNAPHOSE_OBJS)
 snapsave: $(SNAPSAVE_OBJS)
 	$(CC) -o $@ $^ $(SNAPHOSE_LIBS)
 
+
+snapdump: $(SNAPDUMP_OBJS)
+	$(CC) -o $@ $^ $(SNAPHOSE_LIBS)
 
 libsnaphose.so: $(LIB_OBJS)
 	$(CC) -o $@ -shared $^

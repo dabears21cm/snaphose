@@ -5,6 +5,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" { 
+#endif
+
 // this defines the on-wire data format, which is also needed by the receiver!
 
 #define VER_MAGIC 0x5150
@@ -123,12 +127,11 @@ typedef struct snaphose_data
   uint64_t reserved[4];
 
   //make sure double-word-aligned
-  //WARNING, THIS IS BIG-ENDIAN!!!  (the helper functions should fix that)
   _Alignas(8) uint8_t packed_samples[]; //packed samples, rounded up to nearest cacheline of 64
 } snaphose_data_t;
 
-// product gives total in bits, we add 63 the nshift by 9 to convert to number of  cacheliness (512 bits/word) needed, then shift by 6 to get back to bytes
-#define SNAPHOSE_PACKED_DATA_SIZE(NUM_BITS, NUM_SAMPLES)   ((((NUM_BITS * NUM_SAMPLES) + 63) >> 9) << 6)
+// product gives total in bits, we add 511 the nshift by 9 to convert to number of  cacheliness (512 bits/word) needed, then shift by 6 to get back to bytes
+#define SNAPHOSE_PACKED_DATA_SIZE(NUM_BITS, NUM_SAMPLES)   ((((NUM_BITS * NUM_SAMPLES) + 511) >> 9) << 6)
 #define SNAPHOSE_DATA_SIZE_NEEDED(NUM_BITS, NUM_SAMPLES)  sizeof(snaphose_data_t) + SNAPHOSE_PACKED_DATA_SIZE(NUM_BITS, NUM_SAMPLES)
 
 
@@ -185,4 +188,9 @@ int snaphose_unpack_samples_f32(const snaphose_data_t * s,  uint32_t dest_sz,  f
 int snaphose_unpack_samples_f64(const snaphose_data_t * s ,  uint32_t dest_sz,  double  * dest);
 
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif
+

@@ -42,7 +42,7 @@ static void im_done_now_k_thx(int sig)
 
 static char current_filename[1024];
 
-int create_output_fd(char src)
+int create_output_fd(char src, size_t sz)
 {
   static char scratchbuf[1024];
   static int year = -1;
@@ -115,12 +115,10 @@ int create_output_fd(char src)
     symlink(current_filename, scratchbuf);
   }
 
-  /*
-  if (fallocate(fd, 0, 0, sizeof(snaphose_data_t) * spec_per_file))
+  if (fallocate(fd, 0, 0, sz * spec_per_file))
   {
     fprintf(stderr, "fallocate failed\n");
   }
-  */
 
   return fd;
 }
@@ -226,6 +224,11 @@ static int read_setup_file( const char * s)
 int main(int nargs, char ** args)
 {
 
+  int fds[3] = {-1,-1,-1};
+  size_t sz = 0;
+  uint32_t nwritten[3] = {0};
+
+
   struct timespec program_start;
   clock_gettime(CLOCK_MONOTONIC,&program_start);
   const char  * setup_file = "/etc/snapsave.ini";
@@ -300,10 +303,7 @@ int main(int nargs, char ** args)
   }
 
 
-  int fds[3] = {-1,-1,-1};
-  uint32_t nwritten[3] = {0};
-
-
+  
   struct sigaction sa;
   sa.sa_handler = im_done_now_k_thx;
   sigemptyset(&sa.sa_mask);
@@ -343,6 +343,15 @@ int main(int nargs, char ** args)
 
     if (r > 0)
     {
+      if (sz && sz!=r)
+      {
+        fprintf(stderr,"WTF did the size change?\n");
+        ret = 1;
+        goto cleanup;
+      }
+
+      sz = r;
+
       struct cmsghdr * cmsg = CMSG_FIRSTHDR(&msg);
       //timestamp from kernel
       if (cmsg && cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_TIMESTAMPNS)
@@ -384,15 +393,15 @@ int main(int nargs, char ** args)
       }
 
       if (fds[fd_index] < 0) 
-        fds[fd_index] = create_output_fd(d.d.source.which);
+        fds[fd_index] = create_output_fd(d.d.source.which, sz);
 
 
       size_t nwr = 0;
 
-      while (nwr < sizeof(d))
+      while (nwr < sz)
       {
         errno = 0;
-        int w = write(fds[fd_index], ((char*) &d) + nwr, sizeof(d) - nwr);
+        int w = write(fds[fd_index], ((char*) &d) + nwr, sz - nwr);
 
         if (w < 0  && errno != EINTR)
         {
@@ -418,7 +427,10 @@ cleanup:
   {
     if (fds[i] > 0)
     {
-      //ftruncate(fds[i], nwritten[i]  * sizeof(snaphose_data_t));
+      if (ftruncate(fds[i], nwritten[i]  * sz))
+      {
+        fprintf(stderr,"Couldn't truncate\n");
+      }
       close(fds[i]);
     }
 

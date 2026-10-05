@@ -7,7 +7,7 @@ Requires=data.mount
 Type=notify
 ExecStart=@@@/bin/snapsave
 
-WatchDogSec=30
+WatchdogSec=30
 Restart=always
 RestartSec=1
 

@@ -12,6 +12,7 @@ CFLAGS+=$(foreach flag,$(EXTRA_CFLAGS),$(call check_cc_flag,$(flag)))
 SNAPHOSE_LIBS?=-lsystemd -lm -lpthread
 PREFIX?=/usr/local
 ETC?=/etc
+SYSTEMD?=/etc/systemd/system/
 
 
 BUILD_DIR?=build
@@ -58,3 +59,9 @@ install: all
 	install libsnaphose.so $(PREFIX)/lib
 	install snaphose.ini $(ETC)
 	install snapsave.ini $(ETC)
+	sed "s|@@@|$(PREFIX)|" snaphose.service.in > $(SYSTEMD)/snaphose.service
+	sed "s|@@@|$(PREFIX)|" snapsave.service.in > $(SYSTEMD)/snapsave.service
+	systemctl daemon-reload
+
+
+

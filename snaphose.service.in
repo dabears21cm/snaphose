@@ -1,0 +1,14 @@
+[Unit]
+Description="Reads snap blocks and throws them over the network"
+After=network.target
+
+[Service]
+Type=notify
+ExecStart=@@@/bin/snaphose
+
+WatchDogSec=30
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target

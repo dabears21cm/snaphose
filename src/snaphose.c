@@ -649,8 +649,8 @@ static void* tx_thread(void *p)
       }
       d->hsk.temps.red_pitaya = hsk.core_temp; 
 
-      send(fd, d, SNAPHOSE_DATA_SIZE_NEEDED(data_bits, nsamples), 0);
-      if (print_every && ((print_every % nsent) == 0)) snaphose_dump(stdout, d);
+      send(fd, d, buffer_elem_sz, 0);
+      if (print_every && ((nsent % print_every) == 0)) snaphose_dump(stdout, d);
       nsent++;
       buffer_drop();
     }

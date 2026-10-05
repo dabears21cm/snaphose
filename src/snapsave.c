@@ -376,7 +376,8 @@ int main(int nargs, char ** args)
         nwritten[fd_index] = 0;
       }
 
-      if (fds[fd_index] < 0) fds[fd_index] = create_output_fd(d.source.which);
+      if (fds[fd_index] < 0) 
+        fds[fd_index] = create_output_fd(d.source.which);
 
 
       size_t nwr = 0;
@@ -397,7 +398,6 @@ int main(int nargs, char ** args)
       nwritten[fd_index]++;
     }
   }
-
 
 
 

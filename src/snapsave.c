@@ -112,7 +112,10 @@ int create_output_fd(char src, size_t sz)
   {
     sprintf(scratchbuf, "%s/%c.CURRENT.dabears.tmp", data_out, src);
     unlink(scratchbuf);
-    symlink(current_filename, scratchbuf);
+    if (symlink(current_filename, scratchbuf))
+    {
+      fprintf(stderr, "symlink failed\n");
+    }
   }
 
   if (fallocate(fd, 0, 0, sz * spec_per_file))

@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 #ifdef __cplusplus
-extern "C" { 
+extern "C" {
 #endif
 
 // this defines the on-wire data format, which is also needed by the receiver!

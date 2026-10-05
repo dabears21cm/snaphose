@@ -31,7 +31,7 @@ int main(int nargs, char ** args)
     while (!feof(f))
     {
 
-      if (sizeof(snaphose_data_t) != fread(d.dbuf, sizeof(snaphose_data_t), 1, f))
+      if (1 != fread(d.dbuf, sizeof(snaphose_data_t), 1, f))
       {
         fprintf(stderr,"Problem reading header. We probably won't recover from this\n");
         continue;

@@ -115,10 +115,12 @@ int create_output_fd(char src)
     symlink(current_filename, scratchbuf);
   }
 
+  /*
   if (fallocate(fd, 0, 0, sizeof(snaphose_data_t) * spec_per_file))
   {
     fprintf(stderr, "fallocate failed\n");
   }
+  */
 
   return fd;
 }
@@ -416,7 +418,7 @@ cleanup:
   {
     if (fds[i] > 0)
     {
-      ftruncate(fds[i], nwritten[i]  * sizeof(snaphose_data_t));
+      //ftruncate(fds[i], nwritten[i]  * sizeof(snaphose_data_t));
       close(fds[i]);
     }
 

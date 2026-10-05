@@ -349,7 +349,8 @@ int main(int nargs, char ** args)
 
     int ret = poll (&pfd,1, 1000);
 
-    if (ret  < 1)
+    if (ret == 0) continue;
+    if (ret  < 0)
     {
       if (errno != EINTR)
       {

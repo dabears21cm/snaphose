@@ -42,7 +42,7 @@ int snaphose_unpack_samples_u64(const snaphose_data_t * s,  uint32_t dest_sz,  u
   if (s->nbits_per_bin == 64)
   {
     uint64_t * as_u64 = (uint64_t *) s->packed_samples;
-    for (uint32_t i = 0; i < dest_sz; i++) dest[i] = __builtin_bswap64(as_u64[i]);
+    for (uint32_t i = 0; i < dest_sz; i++) dest[i] = (as_u64[i]);
   }
   else
   {
@@ -77,65 +77,6 @@ typedef float  float_half_vec   __attribute__ ((vector_size (SIMD_BYTES/2)));
 typedef uint32_t u32_half_vec   __attribute__ ((vector_size (SIMD_BYTES/2)));
 
 
-// for fast bswap
-typedef uint8_t u8_mask_vec __attribute__ ((vector_size (SIMD_BYTES)));
-typedef uint8_t u8_mask_half_vec __attribute__ ((vector_size (SIMD_BYTES/2)));
-
-static inline u64_vec u64_vec_bswap(u64_vec vec) {
-    // We construct a compound literal mask of the same size.
-    // Every 8-byte lane reverses its internal byte offsets.
-    u8_mask_vec mask = {
-        #if SIMD_BYTES >= 16
-        7, 6, 5, 4, 3, 2, 1, 0,           15, 14, 13, 12, 11, 10, 9, 8,
-        #endif
-        #if SIMD_BYTES >= 32
-        23, 22, 21, 20, 19, 18, 17, 16,   31, 30, 29, 28, 27, 26, 25, 24,
-        #endif
-        #if SIMD_BYTES >= 64
-        39, 38, 37, 36, 35, 34, 33, 32,   47, 46, 45, 44, 43, 42, 41, 40,
-        55, 54, 53, 52, 51, 50, 49, 48,   63, 62, 61, 60, 59, 58, 57, 56
-        #endif
-    };
-
-    // Cast the 64-bit element vector to a raw byte vector, shuffle, and cast back
-    return (u64_vec)__builtin_shuffle((u8_mask_vec) vec, mask);
-}
-
-static inline u32_vec u32_vec_bswap(u32_vec vec) {
-    u8_mask_vec mask = {
-        #if SIMD_BYTES >= 16
-        3, 2, 1, 0,   7, 6, 5, 4,   11, 10, 9, 8,   15, 14, 13, 12,
-        #endif
-        #if SIMD_BYTES >= 32
-        19, 18, 17, 16,   23, 22, 21, 20,   27, 26, 25, 24,   31, 30, 29, 28,
-        #endif
-        #if SIMD_BYTES >= 64
-        35, 34, 33, 32,   39, 38, 37, 36,   43, 42, 41, 40,   47, 46, 45, 44,
-        51, 50, 49, 48,   55, 54, 53, 52,   59, 58, 57, 56,   63, 62, 61, 60
-        #endif
-    };
-
-    return (u32_vec)__builtin_shuffle((u8_mask_vec)vec, mask);
-}
-
-static inline u32_half_vec u32_half_vec_bswap(u32_half_vec vec) {
-    u8_mask_half_vec mask = {
-        #if SIMD_BYTES >= 16
-        3, 2, 1, 0,   7, 6, 5, 4,
-        #endif
-        #if SIMD_BYTES >= 32
-        11, 10, 9, 8,   15, 14, 13, 12,
-        #endif
-        #if SIMD_BYTES >= 64
-        19, 18, 17, 16,   23, 22, 21, 20,   27, 26, 25, 24,   31, 30, 29, 28,
-        #endif
-    };
-
-    return (u32_half_vec)__builtin_shuffle((u8_mask_half_vec)vec, mask);
-}
-
-
-
 /** Unpack samples to a 32-bit float*/
 int snaphose_unpack_samples_f32(const snaphose_data_t * s,  uint32_t dest_sz,  float  * dest)
 {
@@ -151,7 +92,7 @@ int snaphose_unpack_samples_f32(const snaphose_data_t * s,  uint32_t dest_sz,  f
     {
       u64_vec chunk;
       __builtin_memcpy(&chunk, &as_u64[i], sizeof(u64_vec));
-      float_half_vec result = __builtin_convertvector(u64_vec_bswap(chunk), float_half_vec);
+      float_half_vec result = __builtin_convertvector(chunk, float_half_vec);
       __builtin_memcpy(&dest[i], &result, sizeof(float_half_vec));
     }
 #else
@@ -159,7 +100,7 @@ int snaphose_unpack_samples_f32(const snaphose_data_t * s,  uint32_t dest_sz,  f
 #endif
 
     //cleanup loop
-    for (; i < dest_sz; i++) dest[i] = (float) __builtin_bswap64(as_u64[i]);
+    for (; i < dest_sz; i++) dest[i] = (float) (as_u64[i]);
   }
   else if (s->nbits_per_bin == 32)
   {
@@ -172,12 +113,12 @@ int snaphose_unpack_samples_f32(const snaphose_data_t * s,  uint32_t dest_sz,  f
     {
       u32_vec chunk;
       __builtin_memcpy(&chunk, &as_u32[i], sizeof(u32_vec));
-      float_vec result = __builtin_convertvector(u32_vec_bswap(chunk), float_vec);
+      float_vec result = __builtin_convertvector(chunk, float_vec);
       __builtin_memcpy(&dest[i], &result, sizeof(float_vec));
     }
 #endif
     //cleanup loop
-    for (; i < dest_sz; i++) dest[i] = (float) __builtin_bswap32(as_u32[i]);
+    for (; i < dest_sz; i++) dest[i] = (float) (as_u32[i]);
   }
   else
   {
@@ -203,7 +144,7 @@ int snaphose_unpack_samples_f64(const snaphose_data_t * s ,  uint32_t dest_sz,  
     {
       u64_vec chunk;
       __builtin_memcpy(&chunk, &as_u64[i], sizeof(u64_vec));
-      double_vec result = __builtin_convertvector(u64_vec_bswap(chunk), double_vec);
+      double_vec result = __builtin_convertvector(chunk, double_vec);
       __builtin_memcpy(&dest[i], &result, sizeof(double_vec));
     }
 
@@ -222,7 +163,7 @@ int snaphose_unpack_samples_f64(const snaphose_data_t * s ,  uint32_t dest_sz,  
     {
       u32_half_vec chunk;
       __builtin_memcpy(&chunk, &as_u32[i], sizeof(u32_half_vec));
-      double_vec result = __builtin_convertvector(u32_half_vec_bswap(chunk), double_vec);
+      double_vec result = __builtin_convertvector(chunk, double_vec);
       __builtin_memcpy(&dest[i], &result, sizeof(double_vec));
     }
 #endif

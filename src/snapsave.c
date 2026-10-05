@@ -3,6 +3,7 @@
 #include <time.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <fcntl.h>

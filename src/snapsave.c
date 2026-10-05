@@ -64,7 +64,6 @@ int create_output_fd(char src, size_t sz)
     month = tm->tm_mon + 1;
     day = tm->tm_mday;
     sprintf(scratchbuf,"%s/%d-%02d-%02d", data_out, year, month, day);
-    errno = 0;
     if( mkdir(scratchbuf, 0755) && errno != EEXIST)
     {
       fprintf(stderr,"Problem making %s. This will probably end poorly. \n", scratchbuf);
@@ -78,7 +77,6 @@ int create_output_fd(char src, size_t sz)
     hour = tm->tm_hour;
     sprintf(scratchbuf,"%s/%d-%02d-%02d/%02d", data_out, year, month, day, hour);
 
-    errno = 0;
     if( mkdir(scratchbuf, 0755) && errno != EEXIST)
     {
       fprintf(stderr,"Problem making %s. This will probably end poorly. \n", scratchbuf);
@@ -93,7 +91,6 @@ int create_output_fd(char src, size_t sz)
     min = tm->tm_min;
     sprintf(scratchbuf,"%s/%d-%02d-%02d/%02d/%02d", data_out, year, month, day, hour, min);
     mkdir(scratchbuf, 0755);
-    errno = 0;
     if( mkdir(scratchbuf, 0755) && errno != EEXIST)
     {
       fprintf(stderr,"Problem making %s. This will probably end poorly. \n", scratchbuf);
@@ -102,7 +99,6 @@ int create_output_fd(char src, size_t sz)
 
   sprintf(current_filename,"%s/%d-%02d-%02d/%02d/%02d/%c.%02d.%06d.dabears", data_out, year, month, day, hour, min, src, tm->tm_sec, (int) (now.tv_nsec /1000));
 
-  errno = 0;
   int fd =  open(current_filename, O_CREAT | O_RDWR, 0644);
   if (fd < 0)
   {
@@ -306,7 +302,7 @@ int main(int nargs, char ** args)
   }
 
 
-  
+  struct timespec last_watchdog = {0};
   struct sigaction sa;
   sa.sa_handler = im_done_now_k_thx;
   sigemptyset(&sa.sa_mask);
@@ -315,8 +311,21 @@ int main(int nargs, char ** args)
   sigaction(SIGTERM, &sa, NULL);
   sigaction(SIGINT, &sa, NULL);
 
+  sd_notify(0,"READY=1");
+
+  uint32_t last_clk = 0;
+
   while (!done_now)
   {
+
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC_COARSE, &now);
+    if (now.tv_sec - last_watchdog.tv_sec > watchdog_interval)
+    {
+      sd_notify(0, "WATCHDOG=1");
+      memcpy(&last_watchdog, &now, sizeof(now));
+    }
+    sd_notify(0, "WATCHDOG=1");
 
     static union
     {
@@ -335,8 +344,24 @@ int main(int nargs, char ** args)
       .msg_controllen = sizeof(ctrl_buf),
     };
 
-    errno = 0;
+    //poll the rx_fd. Can't wait forever becaues then watchdog would kill us
+    struct pollfd pfd =  {.fd = rx_fd, .events = POLLIN };
+
+    int ret = poll (&pfd,1, 1000);
+
+    if (ret  < 1)
+    {
+      if (errno != EINTR)
+      {
+        fprintf(stderr,"Error %d in poll\n", errno);
+        break;
+      }
+      continue;
+    }
+    if (0 == (pfd.revents & POLLIN)) continue;
+
     ssize_t r = recvmsg(rx_fd, &msg, 0);
+
     if (r < 0 && errno != EINTR)
     {
       fprintf(stderr,"Got err %d (%s) in recvmsg\n", errno, strerror(errno));
@@ -365,7 +390,6 @@ int main(int nargs, char ** args)
       }
       else //we gotta provide it
       {
-        struct timespec now;
         clock_gettime(CLOCK_REALTIME, &now);
         d.d.rcv_cpu_time.utc_secs = now.tv_sec;
         d.d.rcv_cpu_time.utc_nsecs = now.tv_nsec;
@@ -374,6 +398,14 @@ int main(int nargs, char ** args)
 
       //TODO fill in hsk information
 
+      d.d.hsk.uptime.snapsave = (now.tv_sec - program_start.tv_sec)/60;
+      d.d.hsk.uptime.rpi = (now.tv_sec)/60;
+
+      if (verbose)
+      {
+        printf("Got packet, delta_clocks = %u\n", d.d.snap_cycle_count - last_clk);
+        last_clk = d.d.snap_cycle_count;
+      }
 
       //get file descriptor
       int fd_index = d.d.source.which == 'A' ? 0  :
@@ -445,7 +477,6 @@ cleanup:
       }
       close(fds[i]);
     }
-
   }
 
   return ret;

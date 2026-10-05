@@ -312,7 +312,12 @@ int main(int nargs, char ** args)
 
   while (!done_now)
   {
-    static snaphose_data_t d = {0};
+
+    static union
+    {
+      snaphose_data_t d ;
+      uint8_t dbuf[65527];  // can hold any UDP packet
+    } d;
 
     struct iovec msg_iov = { &d, sizeof(d) };
 
@@ -341,15 +346,15 @@ int main(int nargs, char ** args)
       if (cmsg && cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_TIMESTAMPNS)
       {
         struct timespec * rcv_time = (struct timespec *) CMSG_DATA(cmsg);
-        d.rcv_cpu_time.utc_secs = rcv_time->tv_sec;
-        d.rcv_cpu_time.utc_nsecs = rcv_time->tv_nsec;
+        d.d.rcv_cpu_time.utc_secs = rcv_time->tv_sec;
+        d.d.rcv_cpu_time.utc_nsecs = rcv_time->tv_nsec;
       }
       else //we gotta provide it
       {
         struct timespec now;
         clock_gettime(CLOCK_REALTIME, &now);
-        d.rcv_cpu_time.utc_secs = now.tv_sec;
-        d.rcv_cpu_time.utc_nsecs = now.tv_nsec;
+        d.d.rcv_cpu_time.utc_secs = now.tv_sec;
+        d.d.rcv_cpu_time.utc_nsecs = now.tv_nsec;
       }
 
 
@@ -357,15 +362,15 @@ int main(int nargs, char ** args)
 
 
       //get file descriptor
-      int fd_index = d.source.which == 'A' ? 0  :
-                     d.source.which == 'N' ? 1 :
-                     d.source.which == 'T' ? 2 :
+      int fd_index = d.d.source.which == 'A' ? 0  :
+                     d.d.source.which == 'N' ? 1 :
+                     d.d.source.which == 'T' ? 2 :
                      -1;
 
 
       if (fd_index < 0)
       {
-        fprintf(stderr,"Unexpected source %c, skipping\n", d.source.which);
+        fprintf(stderr,"Unexpected source %c, skipping\n", d.d.source.which);
         continue;
       }
 
@@ -377,7 +382,7 @@ int main(int nargs, char ** args)
       }
 
       if (fds[fd_index] < 0) 
-        fds[fd_index] = create_output_fd(d.source.which);
+        fds[fd_index] = create_output_fd(d.d.source.which);
 
 
       size_t nwr = 0;

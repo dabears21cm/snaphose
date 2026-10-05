@@ -373,6 +373,7 @@ int main(int nargs, char ** args)
 {
 
   clock_gettime(CLOCK_MONOTONIC,&program_start);
+  setvbuf(stdout, NULL, _IONBF, 0);
   //parse arguments
   for (int iarg = 1; iarg < nargs; iarg++)
   {

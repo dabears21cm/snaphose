@@ -390,6 +390,15 @@ int main(int nargs, char ** args)
         close(fds[fd_index]);
         fds[fd_index] = -1;
         nwritten[fd_index] = 0;
+        static char buf1[128];
+        //TODO can reuse these buffers rather than recreating them each time lol
+        sprintf(buf1, "%s/%c.CURRENT.dabears.tmp", data_out, d.d.source.which);
+        static char buf2[128];
+        sprintf(buf2, "%s/%c.CURRENT.dabears", data_out, d.d.source.which);
+        if (rename(buf1,buf2))
+        {
+          fprintf(stderr, "symlink rename problem\n");
+        }
       }
 
       if (fds[fd_index] < 0) 

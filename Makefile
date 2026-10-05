@@ -53,6 +53,8 @@ clean:
 install: all
 	install -d $(PREFIX)/bin
 	install snaphose $(PREFIX)/bin
+	install snapsave $(PREFIX)/bin
+	install snapdump $(PREFIX)/bin
 	install libsnaphose.so $(PREFIX)/lib
 	install snaphose.ini $(ETC)
 	install snapsave.ini $(ETC)

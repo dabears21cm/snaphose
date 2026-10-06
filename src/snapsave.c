@@ -180,7 +180,15 @@ static int setup_handler(void * user, const char * section, const char * name, c
 
   else if (strstr(section,"data"))
   {
-    if (!strcmp(name,"output_dir")) data_out = strdup(val);
+    if (!strcmp(name,"output_dir"))
+    {
+      data_out = strdup(val);
+      if (strlen(data_out) > 64)
+      {
+        fprintf(stderr,"Unreasonably long data output directory.\n");
+        return 0;
+      }
+    }
     else if (!strcmp(name,"spectra_per_file")) spec_per_file = atoi(val);
     else 
     {

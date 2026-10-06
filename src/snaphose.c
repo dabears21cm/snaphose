@@ -395,7 +395,7 @@ int main(int nargs, char ** args)
   }
 
   //validate regs
-  if (!reg.accum_len || !reg.valid_counts || !reg.total_counts || !reg.clk_cnts || !reg.pps_duration || !reg.pps_counter || !reg.toggle || !reg.clk_cnts)
+  if (!reg.accum_len || !reg.valid_counts || !reg.total_counts || !reg.clk_cnts || !reg.pps_duration || !reg.pps_counter || !reg.toggle)
   {
     fprintf(stderr,"ruhroh, one or more regs not defined. It would be nice if I told you which one(s) wouldn't it?\n");
     return 1;

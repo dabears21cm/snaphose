@@ -91,7 +91,6 @@ int create_output_fd(char src, size_t sz)
   {
     min = tm->tm_min;
     sprintf(scratchbuf,"%s/%d-%02d-%02d/%02d/%02d", data_out, year, month, day, hour, min);
-    mkdir(scratchbuf, 0755);
     if( mkdir(scratchbuf, 0755) && errno != EEXIST)
     {
       fprintf(stderr,"Problem making %s. This will probably end poorly. \n", scratchbuf);

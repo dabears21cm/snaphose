@@ -782,18 +782,9 @@ static int snap_arm(size_t i)
   if (verbose) printf("snap %zu arming\n",i);
 
 
-  uint32_t arm_status = (uint32_t) -1;
-  while (arm_status)
-  {
-    write_reg(setup[i].arm,0);
-    read_reg(setup[i].arm,&arm_status);
-  }
 
-  while (!arm_status)
-  {
-    write_reg(setup[i].arm,1);
-    read_reg(setup[i].arm,&arm_status);
-  }
+  write_reg(setup[i].arm,0);
+  write_reg(setup[i].arm,1);
 
   return 0;
 }

@@ -357,11 +357,11 @@ int main(int nargs, char ** args)
     //poll the rx_fd. Can't wait forever becaues then watchdog would kill us
     struct pollfd pfd =  {.fd = rx_fd, .events = POLLIN };
 
-    ret = poll (&pfd,1, 1000);
+    int pollret = poll (&pfd,1, 1000);
 
-    if (ret == 0) continue;
+    if (pollret == 0) continue;
 
-    if (ret  < 0)
+    if (pollret  < 0)
     {
       if (errno != EINTR)
       {

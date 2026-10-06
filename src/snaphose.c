@@ -405,9 +405,10 @@ int main(int nargs, char ** args)
   //validate snap setups
   for (int i = 0 ; i < MAX_SNAPS; i++)
   {
-    if (setup[i].ctrl || setup[i].status || setup[i].bram || setup[i].val)
+    //one is allowed to be 0
+    if (1 >= (0==setup[i].ctrl) +  (0==setup[i].status) + (0==setup[i].bram) + (0 == setup[i].val) + (0 == setup[i].arm))
     {
-      printf("snap.%d { 0x%x 0x%x 0x%x 0x%x } \n", i, setup[i].ctrl, setup[i].status, setup[i].bram, setup[i].val);
+      printf("snap.%d { 0x%x 0x%x 0x%x 0x%x  0x%x} \n", i, setup[i].ctrl, setup[i].status, setup[i].bram, setup[i].val, setup[i].arm);
       if (nblocks != i)
       {
         fprintf(stderr,"ruhroh, non-continuous snap definitions detected. Ignoring after first empty one\n");

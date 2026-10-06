@@ -81,10 +81,10 @@ static uint32_t read_reg_dbg(uint32_t address)
 }
 
 // configuration options, read from file, or possibly overwritten by command line in a few cases
-static short dest_port;
+static uint16_t dest_port;
 static const char * dest_addr = "255.255.255.255";
 static bool udp_broadcast;
-static short tcp_control_port;
+static uint16_t tcp_control_port;
 static bool verbose;
 static uint32_t nsamples = 2048;
 static uint32_t data_bits = 64;

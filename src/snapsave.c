@@ -75,6 +75,7 @@ int create_output_fd(char src, size_t sz)
   if (tm->tm_hour != hour)
   {
     hour = tm->tm_hour;
+    min = -1;
     sprintf(scratchbuf,"%s/%d-%02d-%02d/%02d", data_out, year, month, day, hour);
 
     if( mkdir(scratchbuf, 0755) && errno != EEXIST)

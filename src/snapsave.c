@@ -384,7 +384,7 @@ int main(int nargs, char ** args)
 
     if (r > 0)
     {
-      if (sz < sizeof(snaphose_data_t) || d.d.ver_magic != SNAPHOSE_VER_MAGIC)
+      if (r < sizeof(snaphose_data_t) || d.d.ver_magic != SNAPHOSE_VER_MAGIC)
       {
         fprintf(stderr,"Malformed snaphose data?\n");
         continue;

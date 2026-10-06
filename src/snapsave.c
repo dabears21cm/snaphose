@@ -326,7 +326,6 @@ int main(int nargs, char ** args)
       sd_notify(0, "WATCHDOG=1");
       memcpy(&last_watchdog, &now, sizeof(now));
     }
-    sd_notify(0, "WATCHDOG=1");
 
     static union
     {

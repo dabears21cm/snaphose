@@ -298,12 +298,17 @@ static _Atomic bool drain = true; //  Toggle on whether or not we need to drain
 
 static struct timespec program_start;
 
-static _Alignas(64) _Atomic size_t buffer_written_shared;
+typedef struct  no_sharing
+{
+  _Alignas(64) _Atomic size_t val;
+} no_sharing_t;
+
+static no_sharing_t buffer_written_shared;
 static size_t buffer_elem_sz;
 static bool got_mem;
 // the buffer
 char * buffer = 0;
-static _Alignas(64) _Atomic size_t buffer_read_shared;
+static no_sharing_t buffer_read_shared;
 
 static void buffer_init()
 {
@@ -316,8 +321,8 @@ static snaphose_data_t * buffer_retrieve()
 
   size_t current_written, current_read;
 
-  current_written = atomic_load_explicit(&buffer_written_shared, memory_order_acquire);
-  current_read = atomic_load_explicit(&buffer_read_shared, memory_order_relaxed);
+  current_written = atomic_load_explicit(&buffer_written_shared.val, memory_order_acquire);
+  current_read = atomic_load_explicit(&buffer_read_shared.val, memory_order_relaxed);
   if (current_read == current_written) return NULL;
 
   size_t idx = current_read & buffer_size_mask;
@@ -331,8 +336,8 @@ static snaphose_data_t * buffer_acquire()
   uint32_t ntimes_full = 0;
   while (true)
   {
-    current_written = atomic_load_explicit(&buffer_written_shared, memory_order_relaxed);
-    current_read = atomic_load_explicit(&buffer_read_shared, memory_order_acquire);
+    current_written = atomic_load_explicit(&buffer_written_shared.val, memory_order_relaxed);
+    current_read = atomic_load_explicit(&buffer_read_shared.val, memory_order_acquire);
 
 
     if (current_written-current_read < buffer_size)
@@ -354,20 +359,20 @@ static snaphose_data_t * buffer_acquire()
 static void buffer_commit()
 {
   if (!got_mem) return;
-  atomic_fetch_add_explicit(&buffer_written_shared, 1, memory_order_release);
+  atomic_fetch_add_explicit(&buffer_written_shared.val, 1, memory_order_release);
   got_mem = false;
 }
 
 static void buffer_drop()
 {
 
-  size_t current_written = atomic_load_explicit(&buffer_written_shared, memory_order_acquire);
-  size_t current_read = atomic_load_explicit(&buffer_read_shared, memory_order_relaxed);
+  size_t current_written = atomic_load_explicit(&buffer_written_shared.val, memory_order_acquire);
+  size_t current_read = atomic_load_explicit(&buffer_read_shared.val, memory_order_relaxed);
 
   // nothing to dropp
   if (current_written == current_read) return;
 
-  atomic_fetch_add_explicit(&buffer_read_shared, 1, memory_order_release);
+  atomic_fetch_add_explicit(&buffer_read_shared.val, 1, memory_order_release);
 }
 
 int main(int nargs, char ** args)

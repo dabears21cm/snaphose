@@ -434,6 +434,8 @@ int main(int nargs, char ** args)
 
   //mmap the FPGA
 
+  int ctrl_fd = -1;
+  int tx_fd = -1;
   int dev_mem_fd = open("/dev/mem", O_RDWR | O_SYNC);
   if (dev_mem_fd < 0)
   {
@@ -453,7 +455,7 @@ int main(int nargs, char ** args)
   }
 
   // open up network ports
-  int ctrl_fd = socket(AF_INET, SOCK_STREAM, 0);
+  ctrl_fd = socket(AF_INET, SOCK_STREAM, 0);
   if (ctrl_fd <= 0)
   {
     fprintf(stderr, "Could not open TCP socket\n");
@@ -461,7 +463,7 @@ int main(int nargs, char ** args)
     goto cleanup;
   }
 
-  int tx_fd = socket(AF_INET, SOCK_DGRAM, 0);
+  tx_fd = socket(AF_INET, SOCK_DGRAM, 0);
   if (tx_fd <= 0)
   {
     fprintf(stderr, "Could not open UDP socket\n");
@@ -574,10 +576,10 @@ int main(int nargs, char ** args)
   pthread_join(the_ctrl_thread, NULL);
 
 cleanup:
-  if (fpga) munmap((void*)fpga,0);
-  if (dev_mem_fd) close(dev_mem_fd);
-  if (ctrl_fd) close(ctrl_fd);
-  if (tx_fd) close(tx_fd);
+  if (fpga!= MAP_FAILED) munmap((void*)fpga,FPGA_MEM_SIZE);
+  if (dev_mem_fd > 0) close(dev_mem_fd);
+  if (ctrl_fd > 0) close(ctrl_fd);
+  if (tx_fd > 0) close(tx_fd);
   if (buffer) free(buffer);
 
 

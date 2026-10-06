@@ -63,6 +63,8 @@ int create_output_fd(char src, size_t sz)
     year = tm->tm_year + 1900;
     month = tm->tm_mon + 1;
     day = tm->tm_mday;
+    min = -1;
+    hour = -1;
     sprintf(scratchbuf,"%s/%d-%02d-%02d", data_out, year, month, day);
     if( mkdir(scratchbuf, 0755) && errno != EEXIST)
     {

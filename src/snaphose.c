@@ -341,7 +341,7 @@ static snaphose_data_t * buffer_acquire()
     }
     else
     {
-      fprintf(stderr,"WARNING BUFFER IS FULL (%u)\n", ntimes_full++);
+      if (ntimes_full++ < 8 || ((ntimes_full %8) == 0)) fprintf(stderr,"WARNING BUFFER IS FULL (%u)\n", ntimes_full);
       usleep(200);
     }
   }
@@ -395,7 +395,7 @@ int main(int nargs, char ** args)
   }
 
   //validate regs
-  if (!reg.accum_len || !reg.valid_counts || !reg.total_counts || !reg.clk_cnts || !reg.pps_duration || !reg.pps_counter || !reg.toggle)
+  if (!reg.accum_len || !reg.valid_counts || !reg.total_counts || !reg.clk_cnts || !reg.pps_duration || !reg.pps_counter || !reg.toggle )
   {
     fprintf(stderr,"ruhroh, one or more regs not defined. It would be nice if I told you which one(s) wouldn't it?\n");
     return 1;

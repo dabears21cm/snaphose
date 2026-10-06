@@ -104,6 +104,7 @@ int create_output_fd(char src, size_t sz)
   if (fd < 0)
   {
     fprintf(stderr,"Problem making %s (err %d, %s). Probably going to make you sad\n", current_filename, errno, strerror(errno));
+    return fd;
   }
   else
   {

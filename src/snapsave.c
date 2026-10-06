@@ -393,9 +393,10 @@ int main(int nargs, char ** args)
       }
       else //we gotta provide it
       {
-        clock_gettime(CLOCK_REALTIME, &now);
-        d.d.rcv_cpu_time.utc_secs = now.tv_sec;
-        d.d.rcv_cpu_time.utc_nsecs = now.tv_nsec;
+        struct timespec now_rt;
+        clock_gettime(CLOCK_REALTIME, &now_rt);
+        d.d.rcv_cpu_time.utc_secs = now_rt.tv_sec;
+        d.d.rcv_cpu_time.utc_nsecs = now_rt.tv_nsec;
       }
 
 

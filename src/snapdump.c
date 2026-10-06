@@ -37,7 +37,7 @@ int main(int nargs, char ** args)
         continue;
       }
 
-      if (d.d.ver_magic != 0x5150)
+      if (d.d.ver_magic != SNAPHOSE_VER_MAGIC)
       {
         fprintf(stderr," Bad magic %hx\n", d.d.ver_magic);
       }

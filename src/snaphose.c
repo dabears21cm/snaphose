@@ -634,7 +634,7 @@ static void* tx_thread(void *p)
       struct timespec now_rt;
       clock_gettime(CLOCK_MONOTONIC, &now);
       clock_gettime(CLOCK_REALTIME, &now_rt);
-      d->ver_magic = VER_MAGIC;
+      d->ver_magic = SNAPHOSE_VER_MAGIC;
       d->nfreqbins = nsamples;
       d->nbits_per_bin = data_bits;
       d->fw_rev = 0; // TODO
@@ -869,7 +869,7 @@ static void*  read_thread(void * v)
           volatile uint32_t * stop_word = start_word + (data_bits>>5) * nsamples;
 
           // TODO I can handle the endianness swap here, I guess, rather than on readout? 
-          for (volatile uint32_t * word = start_word; word <= stop_word; )
+          for (volatile uint32_t * word = start_word; word < stop_word; )
           {
             *output++ = *word++;
           }

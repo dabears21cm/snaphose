@@ -382,9 +382,14 @@ int main(int nargs, char ** args)
 
     if (r > 0)
     {
+      if (sz < sizeof(snaphose_data_t) || d.d.ver_magic != SNAPHOSE_VER_MAGIC)
+      {
+        fprintf(stderr,"Malformed snaphose data?\n");
+        continue;
+      }
       if (sz && sz!=r)
       {
-        fprintf(stderr,"WTF did the size change?\n");
+        fprintf(stderr,"WTF did the size change? Gonna clean up and get resurrected by systemd.\n");
         ret = 1;
         goto cleanup;
       }

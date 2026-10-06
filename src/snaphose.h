@@ -11,7 +11,7 @@ extern "C" {
 
 // this defines the on-wire data format, which is also needed by the receiver!
 
-#define VER_MAGIC 0x5150
+#define SNAPHOSE_VER_MAGIC 0x5150
 
 // Used for TCP
 enum e_snaphose_ctrl_chars

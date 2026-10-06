@@ -738,7 +738,7 @@ static void* ctrl_thread(void* p)
 
     int pret = poll(&pfd, 1, 500);
 
-    if (pret) continue;
+    if (pret == 0) continue;
     if (pret < 0)
     {
       if (errno !=EINTR) fprintf(stderr,"Unexpected poll error %d (%s)\n", errno, strerror(errno));

@@ -201,7 +201,7 @@ static int setup_handler(void * user, const char * section, const char * name, c
   {
     int snap_id = -1;
     char garbage;
-    if (1 == sscanf(section,"snap.%d%s", &snap_id, &garbage))
+    if (1 == sscanf(section,"snap.%d%c", &snap_id, &garbage))
     {
       if (snap_id < 0 || snap_id >= MAX_SNAPS)
       {

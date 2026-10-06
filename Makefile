@@ -49,7 +49,7 @@ libsnaphose.so: $(LIB_OBJS)
 	$(CC) -o $@ -shared $^
 
 clean:
-	rm -rf $(BUILD_DIR) snaphose libsnaphose.so
+	rm -rf $(BUILD_DIR) snaphose libsnaphose.so snapdump snapsave
 
 install: all
 	install -d $(PREFIX)/bin
@@ -62,6 +62,7 @@ install: all
 	sed "s|@@@|$(PREFIX)|" snaphose.service.in > $(SYSTEMD)/snaphose.service
 	sed "s|@@@|$(PREFIX)|" snapsave.service.in > $(SYSTEMD)/snapsave.service
 	systemctl daemon-reload
+
 
 
 

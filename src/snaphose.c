@@ -270,8 +270,6 @@ static int read_setup_file( const char * s)
 
 }
 
-
-
 static pthread_t the_ctrl_thread;
 static pthread_t the_tx_thread;
 static pthread_t the_read_thread;
@@ -309,6 +307,16 @@ static bool got_mem;
 // the buffer
 char * buffer = 0;
 static no_sharing_t buffer_read_shared;
+
+static no_sharing_t tick_read;
+static no_sharing_t tick_tx;
+static no_sharing_t tick_ctl;
+
+static void hb(no_sharing_t * which)
+{
+  atomic_fetch_add_explicit(&which->val, 1, memory_order_relaxed);
+}
+
 
 static void buffer_init()
 {
@@ -348,6 +356,7 @@ static snaphose_data_t * buffer_acquire()
     {
       if (ntimes_full++ < 8 || ((ntimes_full %8) == 0)) fprintf(stderr,"WARNING BUFFER IS FULL (%u)\n", ntimes_full);
       if (state >= SNAPHOSE_DIE) return NULL;
+      hb(&tick_read);
       usleep(200);
     }
   }
@@ -374,6 +383,9 @@ static void buffer_drop()
 
   atomic_fetch_add_explicit(&buffer_read_shared.val, 1, memory_order_release);
 }
+
+
+
 
 int main(int nargs, char ** args)
 {
@@ -565,16 +577,54 @@ int main(int nargs, char ** args)
 
 
   struct timespec last_watchdog = {0};
+
+  size_t last_ctl = 0;
+  size_t last_tx = 0;
+  size_t last_read = 0;
+
   while(state < SNAPHOSE_DIE)
   {
+    sleep(1);
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
     if (now.tv_sec - last_watchdog.tv_sec > watchdog_interval)
     {
-      sd_notify(0, "WATCHDOG=1");
+
+      bool kick = true;
+      size_t ctl = atomic_load_explicit(&tick_ctl.val, memory_order_relaxed);
+      if (ctl == last_ctl)
+      {
+        fprintf(stderr, "Is ctl thread stuck?\n");
+        kick = false;
+      }
+
+      size_t tx = atomic_load_explicit(&tick_tx.val, memory_order_relaxed);
+
+      if (tx == last_tx)
+      {
+        fprintf(stderr, "Is tx thread stuck?\n");
+        kick = false;
+      }
+
+      size_t rd = atomic_load_explicit(&tick_read.val, memory_order_relaxed);
+
+      if (rd == last_read)
+      {
+        fprintf(stderr, "Is read thread stuck?\n");
+        kick = false;
+      }
+
+      if (kick)
+      {
+        sd_notify(0, "WATCHDOG=1");
+      }
+
+      last_ctl = ctl;
+      last_tx = tx;
+      last_read = rd;
+
       memcpy(&last_watchdog, &now, sizeof(now));
     }
-    sleep(1);
   }
 
 
@@ -636,6 +686,7 @@ static void* tx_thread(void *p)
   while (state < SNAPHOSE_DIE)
   {
     snaphose_data_t * d = 0;
+    hb(&tick_tx);
 
     while ((d = buffer_retrieve()))
     {
@@ -678,9 +729,24 @@ static void* ctrl_thread(void* p)
   //wait for connections
   while (state < SNAPHOSE_DIE)
   {
+    hb(&tick_ctl);
     struct sockaddr_in peer_addr;
     unsigned peer_addr_sz = sizeof(peer_addr);
     errno = 0;
+
+    struct pollfd pfd =  { .fd = fd, .events = POLLIN };
+
+    int pret = poll(&pfd, 1, 500);
+
+    if (pret) continue;
+    if (pret < 0)
+    {
+      if (errno !=EINTR) fprintf(stderr,"Unexpected poll error %d (%s)\n", errno, strerror(errno));
+      continue;
+    }
+
+    if (0 == (pfd.revents & POLLIN)) continue;
+
     int client = accept(fd, (struct sockaddr*) &peer_addr, &peer_addr_sz);
     if (client < 0)
     {
@@ -696,6 +762,7 @@ static void* ctrl_thread(void* p)
     while (state < SNAPHOSE_DIE)
     {
 
+      hb(&tick_ctl);
       struct pollfd pfd = { .fd = client, .events = POLLIN | POLLPRI};
       errno = 0;
       int r  = poll(&pfd, 1, 100);
@@ -803,6 +870,7 @@ static void*  read_thread(void * v)
     {
        // not taking data , sleep for one ms
        usleep(1000);
+       hb(&tick_read);
     }
 
     read_reg(reg.accum_len, &accum_len);
@@ -812,6 +880,7 @@ static void*  read_thread(void * v)
 
     while (state == SNAPHOSE_RUN)
     {
+      hb(&tick_read);
       if (drain)
       {
 

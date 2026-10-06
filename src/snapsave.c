@@ -249,7 +249,7 @@ int main(int nargs, char ** args)
     }
     else
     {
-      fprintf(stderr,"Usage: snapsave [-f config-file = /etc/snaphose.ini]\n");
+      fprintf(stderr,"Usage: snapsave [-f config-file = /etc/snapsave.ini]\n");
       return 1;
     }
   }

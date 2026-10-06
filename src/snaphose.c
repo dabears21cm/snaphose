@@ -607,7 +607,7 @@ static float hsk_get_##WHAT##_iio##IIODEV() {\
     if (f) { if (1!=fscanf(f,"%d", &offset)) {fprintf(stderr,"parse error on offset");} fclose(f); }\
     f  = fopen(HSK_PATH(WHAT,IIODEV,_scale),"r");\
     if (f) { if (1!=fscanf(f,"%f", &scale)) {fprintf(stderr,"parse error on scale");} fclose(f); }\
-    return (raw+offset)/scale;\
+    return (raw+offset)*scale/1000.;\
 }
 
 GEN_HSK(temp0,0)

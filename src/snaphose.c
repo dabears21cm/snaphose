@@ -578,7 +578,7 @@ int main(int nargs, char ** args)
   pthread_join(the_ctrl_thread, NULL);
 
 cleanup:
-  if (fpga!= MAP_FAILED) munmap((void*)fpga,FPGA_MEM_SIZE);
+  if (fpga && fpga!= MAP_FAILED) munmap((void*)fpga,FPGA_MEM_SIZE);
   if (dev_mem_fd > 0) close(dev_mem_fd);
   if (ctrl_fd > 0) close(ctrl_fd);
   if (tx_fd > 0) close(tx_fd);

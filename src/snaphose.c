@@ -342,6 +342,7 @@ static snaphose_data_t * buffer_acquire()
     else
     {
       if (ntimes_full++ < 8 || ((ntimes_full %8) == 0)) fprintf(stderr,"WARNING BUFFER IS FULL (%u)\n", ntimes_full);
+      if (state >= SNAPHOSE_DIE) return NULL;
       usleep(200);
     }
   }

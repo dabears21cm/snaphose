@@ -183,7 +183,7 @@ static int setup_handler(void * user, const char * section, const char * name, c
     if (!strcmp(name,"output_dir"))
     {
       data_out = strdup(val);
-      if (strlen(data_out) > 64)
+      if (!data_out || strlen(data_out) > 64)
       {
         fprintf(stderr,"Unreasonably long data output directory.\n");
         return 0;

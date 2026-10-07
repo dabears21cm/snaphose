@@ -283,6 +283,7 @@ static void update_hsk()
 
   static const sd_json_dispatch_field table [] = {
   HSK_FIELDS(X_DBL_DISPATCH, X_BOOL_DISPATCH)
+  {}
   };
 
   r = sd_json_dispatch(json, table, SD_JSON_ALLOW_EXTENSIONS, &hsk);

@@ -542,11 +542,27 @@ int main(int nargs, char ** args)
                                       .sin_port = htons(dest_port)
   };
 
-  if (connect(tx_fd, (struct sockaddr*) &dest_address, sizeof(dest_address)))
+  int nconnect_fails = 0;
+  while (true)
   {
-    fprintf(stderr,"connect failed\n");
-    ret = 1;
-    goto cleanup;
+    if (connect(tx_fd, (struct sockaddr*) &dest_address, sizeof(dest_address)))
+    {
+      if (nconnect_fails++ < 10)
+      {
+        fprintf(stderr,"connect failed. Try again in a bit\n");
+        sleep(2);
+      }
+      else
+      {
+        ret = 1;
+        goto cleanup;
+      }
+    }
+    else
+    {
+      break;
+
+    }
   }
 
 

@@ -30,7 +30,7 @@
 
 static const char * data_out = "/data/spec/";
 static uint32_t spec_per_file = 100;
-static const char *hsk_file = "/data/Housekeeping.json";
+static const char *hsk_file = "/data/housekeeping.json";
 static int hsk_interval = 10;
 
 static short udp_port = 2100;
@@ -251,7 +251,7 @@ static int read_setup_file( const char * s)
  X_DBL(drive_c)     \
  X_DBL(disk_free_gb)     \
  X_DBL(disk_free_pct)     \
- X_BOOL(throttled)   \
+ X_INT(throttled)   \
  X_DBL(load_1m)     \
  X_DBL(mem_avail_mb)     \
  X_DBL(uptime_h)     \
@@ -260,7 +260,7 @@ static int read_setup_file( const char * s)
  X_INT(atten_T) \
 
 #define X_DBL_DEF(X) double X;
-#define X_BOOL_DEF(X) bool X;
+#define X_BOOL_DEF(X) int X;
 #define X_INT_DEF(X) int X;
 
 static struct pi_hsk

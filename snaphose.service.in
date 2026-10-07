@@ -1,7 +1,7 @@
 [Unit]
 Description="Reads snap blocks and throws them over the network"
-After=network.target dev-mem.device
-Requires=dev-mem.device
+After=network-online.target dev-mem.device
+Requires=network-online.target dev-mem.device
 
 [Service]
 Type=notify

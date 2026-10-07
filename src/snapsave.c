@@ -493,9 +493,10 @@ int main(int nargs, char ** args)
       d.d.hsk.uptime.rpi = (now.tv_sec)/60;
       d.d.hsk.rpi.disk_free_GiB = hsk.disk_free_gb;
       d.d.hsk.rpi.fan_rpm = hsk.pi_fan_rpm;
-      d.d.hsk.rpi.rail5V_mV = hsk.pi_5v_v;
+      d.d.hsk.rpi.rail5V_mV = hsk.pi_5v_v*1000;
       d.d.hsk.rpi.throttled = hsk.throttled;
       d.d.hsk.rpi.free_mem_MB = hsk.mem_avail_mb;
+      d.d.hsk.rpi.core_temp = hsk.pi_cpu_c;
       d.d.hsk.temps.w1_probe = hsk.probe_c;
       d.d.hsk.temps.cal_board = hsk.cal_board_c;
       d.d.hsk.temps.ssd = hsk.drive_c;

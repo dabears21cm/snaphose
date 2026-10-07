@@ -406,6 +406,7 @@ int main(int nargs, char ** args)
     if (now.tv_sec - last_hsk.tv_sec > hsk_interval)
     {
       update_hsk();
+      memcpy(&last_hsk, &now, sizeof(now));
     }
 
     static union

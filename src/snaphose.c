@@ -86,6 +86,7 @@ static const char * dest_addr = "255.255.255.255";
 static bool udp_broadcast;
 static uint16_t tcp_control_port;
 static bool verbose;
+static bool reread_status;
 static uint32_t nsamples = 2048;
 static uint32_t data_bits = 64;
 static uint32_t buffer_size = 256;
@@ -231,6 +232,7 @@ static int setup_handler(void * user, const char * section, const char * name, c
   {
     if (!strcmp(name,"addr_width")) nsamples = 1 << atoi(val); 
     else if (!strcmp(name,"data_width")) data_bits = atoi(val);
+    else if (!strcmp(name,"reread_status")) return !boolish(val,&reread_status);
     else 
     {
       fprintf(stderr,"Invalid key %s in %s\n", name, section);
@@ -906,10 +908,16 @@ static void*  read_thread(void * v)
         size_t isnap = unwrapped_isnap % nblocks;
 
         uint32_t status = 0;
-        read_reg(setup[isnap].status, &status);
-        if (!(status & SNAP_STATUS_DONE))
-        {
+        uint32_t status2 = 0;
 
+        read_reg(setup[isnap].status, &status);
+
+        bool snap_status_done = !(status & SNAP_STATUS_DONE);
+        bool length_matches = (status & 0x7fffffff ) == (nsamples * (data_bits >> 5));
+        bool reread_ok_or_elided =  (!reread_status || (!read_reg(setup[isnap].status,&status2) && (status == status2) ));
+
+        if ( snap_status_done && length_matches && reread_ok_or_elided)
+        {
           struct timespec now_rt;
           clock_gettime(CLOCK_REALTIME, &now_rt);
 

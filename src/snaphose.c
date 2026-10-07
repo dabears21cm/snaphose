@@ -865,11 +865,36 @@ static void* ctrl_thread(void* p)
 static int snap_arm(size_t i)
 {
   if (verbose) printf("snap %zu arming\n",i);
+  int num_iter = 0;
 
 
 
-  write_reg(setup[i].arm,0);
-  write_reg(setup[i].arm,1);
+  uint32_t arm = -1;
+  while (arm)
+  {
+    write_reg(setup[i].arm,0);
+    read_reg(setup[i].arm,&arm);
+    if (num_iter++ > 100) 
+    {
+      fprintf(stderr,"arm problem\n");
+      return -1;
+
+    }
+  }
+
+  num_iter = 0;
+  while (!arm)
+  {
+    write_reg(setup[i].arm,1);
+    read_reg(setup[i].arm,&arm);
+    if (num_iter++ > 100)
+    {
+      fprintf(stderr,"arm problem\n");
+      return -1;
+
+    }
+
+  }
 
   return 0;
 }

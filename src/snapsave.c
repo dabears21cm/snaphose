@@ -275,10 +275,12 @@ static void update_hsk()
   fprintf(stderr,"Trying to update_hsk but don't have sd-json\n");
 #else
   sd_json_variant * json = 0;
-  int r = sd_json_parse_file(NULL, hsk_file,0, &json, NULL, NULL);
+  uint32_t retline = 0;
+  uint32_t retcol = 0;
+  int r = sd_json_parse_file(NULL, hsk_file,0, &json, &retline, &retcol);
   if (r)
   {
-    fprintf(stderr,"Could not parse %s\n", hsk_file);
+    fprintf(stderr,"Could not parse %s (%u:%u)\n", hsk_file, retline, retcol);
     return;
   }
 

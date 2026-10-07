@@ -909,15 +909,12 @@ static void*  read_thread(void * v)
 
         uint32_t status = 0;
         uint32_t status2 = 0;
-
         read_reg(setup[isnap].status, &status);
-
-        bool snap_status_done = !(status & SNAP_STATUS_DONE);
-        bool length_matches = (status & 0x7fffffff ) == (nsamples * (data_bits >> 5));
-        bool reread_ok_or_elided =  (!reread_status || (!read_reg(setup[isnap].status,&status2) && (status == status2) ));
-
-        if ( snap_status_done && length_matches && reread_ok_or_elided)
+        if (!(status & SNAP_STATUS_DONE) &&  ( (status & 0x7fffffff) == (nsamples * (data_bits >> 3))) &&
+              (!reread_status || (!read_reg(setup[isnap].status,&status2) && (status == status2) )))
         {
+
+
           struct timespec now_rt;
           clock_gettime(CLOCK_REALTIME, &now_rt);
 

@@ -19,10 +19,19 @@
 #include <signal.h>
 #include "./ini.h"
 
+#if defined(__has_include) && __has_include(<systemd/sd-json.h>)
+#include <systemd/sd-json.h>
+#define HAVE_SD_JSON
+#else
+#pragma message ("compiling without sd-json support")
+#endif
+
 
 
 static const char * data_out = "/data/spec/";
 static uint32_t spec_per_file = 100;
+static const char *hsk_file = "/data/Housekeeping.json";
+static int hsk_interval = 10;
 
 static short udp_port = 2100;
 static const char * bindto = "0.0.0.0";
@@ -192,6 +201,8 @@ static int setup_handler(void * user, const char * section, const char * name, c
       }
     }
     else if (!strcmp(name,"spectra_per_file")) spec_per_file = atoi(val);
+    else if (!strcmp(name,"hsk_file")) hsk_file = strdup(val);
+    else if (!strcmp(name,"hsk_interval")) hsk_interval = atoi(val);
     else 
     {
       fprintf(stderr,"Invalid key %s in %s\n", name, section);
@@ -230,6 +241,59 @@ static int read_setup_file( const char * s)
   return 0;
 
 }
+
+#define HSK_FIELDS(X_DBL,X_BOOL)  \
+ X_DBL(pi_cpu_c)    \
+ X_DBL(pi_fan_rpm)  \
+ X_DBL(pi_5v_v)     \
+ X_DBL(probe_c) \
+ X_DBL(cal_board_c) \
+ X_DBL(drive_c)     \
+ X_DBL(disk_free_gb)     \
+ X_DBL(disk_free_pct)     \
+ X_BOOL(throttled)   \
+ X_DBL(load_1m)     \
+ X_DBL(mem_avail_mb)     \
+ X_DBL(uptime_h)     \
+
+#define X_DBL_DEF(X) double X;
+#define X_BOOL_DEF(X) bool X;
+
+static struct pi_hsk
+{
+  HSK_FIELDS(X_DBL_DEF,X_BOOL_DEF)
+}hsk;
+
+
+static void update_hsk()
+{
+#ifndef HAVE_SD_JSON
+  fprintf(stderr,"Trying to update_hsk but don't have sd-json\n");
+#else
+  sd_json_variant * json = 0;
+  int r = sd_json_parse_file(NULL, hsk_file,0, &json, NULL, NULL);
+  if (r)
+  {
+    fprintf(stderr,"Could not parse %s\n", hsk_file);
+    return;
+  }
+
+#define X_DBL_DISPATCH(X) {#X , SD_JSON_VARIANT_NUMBER, sd_json_dispatch_double, offsetof(struct pi_hsk, X)},
+#define X_BOOL_DISPATCH(X) {#X , SD_JSON_VARIANT_BOOLEAN, sd_json_dispatch_stdbool, offsetof(struct pi_hsk, X)},
+
+  static const sd_json_dispatch_field table [] = {
+  HSK_FIELDS(X_DBL_DISPATCH, X_BOOL_DISPATCH)
+  };
+
+  r = sd_json_dispatch(json, table, SD_JSON_ALLOW_EXTENSIONS, &hsk);
+  sd_json_variant_unref(json);
+  if (r < 0)
+  {
+    fprintf(stderr,"hsk dispatching failed\n");
+  }
+#endif
+}
+
 
 int main(int nargs, char ** args)
 {
@@ -314,6 +378,7 @@ int main(int nargs, char ** args)
 
 
   struct timespec last_watchdog = {0};
+  struct timespec last_hsk = {0};
   struct sigaction sa;
   sa.sa_handler = im_done_now_k_thx;
   sigemptyset(&sa.sa_mask);
@@ -335,6 +400,11 @@ int main(int nargs, char ** args)
     {
       sd_notify(0, "WATCHDOG=1");
       memcpy(&last_watchdog, &now, sizeof(now));
+    }
+
+    if (now.tv_sec - last_hsk.tv_sec > hsk_interval)
+    {
+      update_hsk();
     }
 
     static union
@@ -419,6 +489,14 @@ int main(int nargs, char ** args)
 
       d.d.hsk.uptime.snapsave = (now.tv_sec - program_start.tv_sec)/60;
       d.d.hsk.uptime.rpi = (now.tv_sec)/60;
+      d.d.hsk.rpi.disk_free_GiB = hsk.disk_free_gb;
+      d.d.hsk.rpi.fan_rpm = hsk.pi_fan_rpm;
+      d.d.hsk.rpi.rail5V_mV = hsk.pi_5v_v;
+      d.d.hsk.rpi.throttled = hsk.throttled;
+      d.d.hsk.rpi.free_mem_MB = hsk.mem_avail_mb;
+      d.d.hsk.temps.w1_probe = hsk.probe_c;
+      d.d.hsk.temps.cal_board = hsk.cal_board_c;
+      d.d.hsk.temps.ssd = hsk.drive_c;
 
       if (verbose)
       {

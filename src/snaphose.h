@@ -84,7 +84,7 @@ typedef struct snaphose_data
  struct
  {
     char which; //which source?  (e_snaphose_source)
-    uint8_t attenuation; //attenuation for this source (dB? halfdB?)
+    uint8_t attenuation; //attenuation for this source (dB, I guess it's only 0 or 10 so could have used fewre bits oh well)
  } source;
 
 

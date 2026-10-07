@@ -242,7 +242,7 @@ static int read_setup_file( const char * s)
 
 }
 
-#define HSK_FIELDS(X_DBL,X_BOOL)  \
+#define HSK_FIELDS(X_DBL,X_BOOL, X_INT)  \
  X_DBL(pi_cpu_c)    \
  X_DBL(pi_fan_rpm)  \
  X_DBL(pi_5v_v)     \
@@ -255,13 +255,17 @@ static int read_setup_file( const char * s)
  X_DBL(load_1m)     \
  X_DBL(mem_avail_mb)     \
  X_DBL(uptime_h)     \
+ X_INT(atten_A) \
+ X_INT(atten_N) \
+ X_INT(atten_T) \
 
 #define X_DBL_DEF(X) double X;
 #define X_BOOL_DEF(X) bool X;
+#define X_INT_DEF(X) int X;
 
 static struct pi_hsk
 {
-  HSK_FIELDS(X_DBL_DEF,X_BOOL_DEF)
+  HSK_FIELDS(X_DBL_DEF,X_BOOL_DEF, X_INT_DEF)
 }hsk;
 
 
@@ -279,10 +283,11 @@ static void update_hsk()
   }
 
 #define X_DBL_DISPATCH(X) {#X , SD_JSON_VARIANT_NUMBER, sd_json_dispatch_double, offsetof(struct pi_hsk, X)},
+#define X_INT_DISPATCH(X) {#X , SD_JSON_VARIANT_NUMBER, sd_json_dispatch_int32, offsetof(struct pi_hsk, X)},
 #define X_BOOL_DISPATCH(X) {#X , SD_JSON_VARIANT_BOOLEAN, sd_json_dispatch_stdbool, offsetof(struct pi_hsk, X)},
 
   static const sd_json_dispatch_field table [] = {
-  HSK_FIELDS(X_DBL_DISPATCH, X_BOOL_DISPATCH)
+  HSK_FIELDS(X_DBL_DISPATCH, X_BOOL_DISPATCH, X_INT_DISPATCH)
   {}
   };
 
@@ -485,6 +490,10 @@ int main(int nargs, char ** args)
         d.d.rcv_cpu_time.utc_secs = now_rt.tv_sec;
         d.d.rcv_cpu_time.utc_nsecs = now_rt.tv_nsec;
       }
+      d.d.source.attenuation = d.d.source.which == 'A' ? hsk.atten_A :
+                               d.d.source.which == 'N' ? hsk.atten_N :
+                               d.d.source.which == 'T' ? hsk.atten_T :
+                               0;
 
 
       //TODO fill in hsk information

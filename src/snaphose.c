@@ -1,6 +1,8 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <time.h>
 #include <stdint.h>
+#include <sched.h>
 #include <unistd.h>
 #include <math.h>
 #include <pthread.h>
@@ -587,6 +589,7 @@ int main(int nargs, char ** args)
 
   buffer_init();
 
+
   if (!buffer) 
   {
     fprintf(stderr,"Could not allocate buffer\n");
@@ -594,8 +597,14 @@ int main(int nargs, char ** args)
     goto cleanup;
   }
 
-  //start the threads
 
+   if (mlockall(MCL_CURRENT | MCL_FUTURE))
+   {
+     fprintf(stderr, "mlock problem, may page fault\n");
+   }
+
+
+  //start the threads
 
   if ( pthread_create(&the_ctrl_thread, NULL, ctrl_thread, &ctrl_fd) ||
        pthread_create(&the_tx_thread, NULL, tx_thread, &tx_fd) ||
@@ -981,6 +990,17 @@ static void*  read_thread(void * v)
   (void) v;
   uint32_t read_counter = 0;
 
+
+
+  // make self really high prioirty
+  struct sched_param sched = { .sched_priority = 50 };
+  int r = pthread_setschedparam(pthread_self(), SCHED_FIFO, &sched);
+  if (r) fprintf(stderr, "could not set SCHED_FIFO (%s)\n", strerror(r));
+
+  cpu_set_t cpus;
+  CPU_ZERO(&cpus);
+  CPU_SET(1, &cpus);
+  pthread_setaffinity_np(pthread_self(), sizeof(cpus), &cpus);
 
   while (state < SNAPHOSE_DIE)
   {

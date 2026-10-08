@@ -959,8 +959,8 @@ static int snap_arm(size_t i)
   uint32_t arm = -1;
   while (arm)
   {
-    write_reg(setup[i].arm,0);
     write_reg(setup[i].ctrl,0);
+    write_reg(setup[i].arm,0);
     read_reg(setup[i].arm,&arm);
     if (num_iter++ > 100) 
     {
@@ -973,8 +973,8 @@ static int snap_arm(size_t i)
   num_iter = 0;
   while (!arm)
   {
-    write_reg(setup[i].arm,1);
     write_reg(setup[i].ctrl,1);
+    write_reg(setup[i].arm,1);
     read_reg(setup[i].arm,&arm);
     if (num_iter++ > 100)
     {

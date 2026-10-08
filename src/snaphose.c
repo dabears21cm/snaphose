@@ -756,10 +756,10 @@ static void* tx_thread(void *p)
         stats.nsent_this_interval++;
         if (nsent)
         {
-          int delta_cycles = d->snap_cycle_count - last_cycles;
-          if (delta_cycles < 0) 
+          int signed_delta_cycles = (int) d->snap_cycle_count - (int) last_cycles;
+          uint32_t delta_cycles = signed_delta_cycles < 0 ? -signed_delta_cycles : signed_delta_cycles;
+          if (signed_delta_cycles < 0) 
           {
-            delta_cycles*=-1;  // force positive, maybe can read out of order?
             stats.out_of_order++;
           }
           stats.delta_cycles_min = (!stats.delta_cycles_min || (delta_cycles < stats.delta_cycles_min)) ? delta_cycles : stats.delta_cycles_min;

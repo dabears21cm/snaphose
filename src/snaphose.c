@@ -775,7 +775,7 @@ static void* tx_thread(void *p)
           if (delta < 0) stats.out_of_order++;
           if (delta == 0)
           {
-            printf(" no elapsed at count = %u\n", d->snap_cycle_count);
+            printf(" no elapsed at count = %u, isnap=%d, elapsed=%hu\n", d->snap_cycle_count, d->snap_index, d->us_elapsed_while_reading);
                 
             stats.no_elapsed++;
           }

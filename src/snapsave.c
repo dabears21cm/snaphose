@@ -533,6 +533,7 @@ int main(int nargs, char ** args)
 
       if (nwritten[fd_index] >= spec_per_file)
       {
+        printf("..done\n");
         close(fds[fd_index]);
         fds[fd_index] = -1;
         nwritten[fd_index] = 0;
@@ -548,7 +549,11 @@ int main(int nargs, char ** args)
       }
 
       if (fds[fd_index] < 0) 
+      {
         fds[fd_index] = create_output_fd(d.d.source.which, sz);
+        printf("Created %s...",current_filename);
+        fflush(stdout);
+      }
 
 
       size_t nwr = 0;

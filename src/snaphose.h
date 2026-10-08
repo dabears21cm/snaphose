@@ -58,7 +58,11 @@ typedef struct snaphose_data
  uint32_t read_counter;
 
  // Information about firmware
- uint32_t fw_rev;
+ uint32_t fw_ver_major : 8;
+ uint32_t fw_ver_minor : 8;
+ uint32_t fw_ver_rev : 9;
+ uint32_t npad_bits_set :1; //for backwards compatibility, assume 16 if not set
+ uint32_t npad_bits : 6;
 
  // CPU time that this reaodut happened
  snaphost_tm_t readout_cpu_time;
@@ -142,16 +146,17 @@ static inline uint64_t snaphose_nth_sample_u64(const snaphose_data_t *s, size_t 
 {
   if (i >= s->nfreqbins)  return (uint64_t) -1;
 
+  int pad = s->npad_bits_set ? s->npad_bits :  ( s->nbits_per_bin == 64 ? 16 : 0);
   switch (s->nbits_per_bin)
   {
     case 64:
-      return (((uint64_t*) s->packed_samples)[i]);
+      return (((uint64_t*) s->packed_samples)[i]) >> pad;
     case 32:
-      return (((uint32_t*) s->packed_samples)[i]);
+      return (((uint32_t*) s->packed_samples)[i]) >> pad;
     case 16:
-      return (((uint16_t*) s->packed_samples)[i]);
+      return (((uint16_t*) s->packed_samples)[i]) >> pad;
     case 8:
-      return s->packed_samples[i];
+      return s->packed_samples[i] >> pad;
     default:
       break;
   }
@@ -172,7 +177,7 @@ static inline uint64_t snaphose_nth_sample_u64(const snaphose_data_t *s, size_t 
 
   val |= (1 << bits_second_double_word) -1;
 
-  return (val);
+  return (val >> pad);
 }
 
 /** Unpack samples to a 64-bit array */

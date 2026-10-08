@@ -92,6 +92,7 @@ static bool verbose;
 static bool reread_status;
 static uint32_t nsamples = 2048;
 static uint32_t data_bits = 64;
+static uint32_t pad_bits = 16;
 static uint32_t buffer_size = 256;
 static uint32_t buffer_size_mask = 0xff;
 static int watchdog_interval = 10;
@@ -254,6 +255,7 @@ static int setup_handler(void * user, const char * section, const char * name, c
   {
     if (!strcmp(name,"addr_width")) nsamples = 1 << atoi(val); 
     else if (!strcmp(name,"data_width")) data_bits = atoi(val);
+    else if (!strcmp(name,"pad_bits")) pad_bits = atoi(val);
     else if (!strcmp(name,"reread_status")) return !boolish(val,&reread_status);
     else 
     {
@@ -747,7 +749,12 @@ static void* tx_thread(void *p)
       d->ver_magic = SNAPHOSE_VER_MAGIC;
       d->nfreqbins = nsamples;
       d->nbits_per_bin = data_bits;
-      d->fw_rev = 0; // TODO
+      //TODO future firmware should set these...
+      d->fw_ver_major = 0;
+      d->fw_ver_minor = 0;
+      d->fw_ver_rev = 0;
+      d->npad_bits_set = 1;
+      d->npad_bits = pad_bits;
       d->accum_length = accum_len;
       d->hsk.uptime.snaphose = (now.tv_sec - program_start.tv_sec)/60;
       d->hsk.uptime.red_pitaya = (now.tv_sec)/60;

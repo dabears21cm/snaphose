@@ -960,7 +960,8 @@ static int snap_arm(size_t i)
   while (arm)
   {
     write_reg(setup[i].arm,0);
-    for (int i =0; i < 5; i++)read_reg(setup[i].arm,&arm);
+    write_reg(setup[i].ctrl,0);
+    read_reg(setup[i].arm,&arm);
     if (num_iter++ > 100) 
     {
       fprintf(stderr,"arm problem\n");
@@ -973,6 +974,7 @@ static int snap_arm(size_t i)
   while (!arm)
   {
     write_reg(setup[i].arm,1);
+    write_reg(setup[i].ctrl,1);
     read_reg(setup[i].arm,&arm);
     if (num_iter++ > 100)
     {

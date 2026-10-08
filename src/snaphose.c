@@ -756,8 +756,8 @@ static void* tx_thread(void *p)
         if (nsent)
         {
           uint32_t delta_cycles = d->snap_cycle_count - last_cycles;
-          stats.delta_cycles_min = (!stats.delta_cycles_min || delta_cycles < stats.delta_cycles_min) ? delta_cycles : stats.delta_cycles_min;
-          stats.delta_cycles_max = (!stats.delta_cycles_max || delta_cycles > stats.delta_cycles_max) ? delta_cycles : stats.delta_cycles_max;
+          stats.delta_cycles_min = (!stats.delta_cycles_min || (delta_cycles < stats.delta_cycles_min)) ? delta_cycles : stats.delta_cycles_min;
+          stats.delta_cycles_max = (!stats.delta_cycles_max || (delta_cycles > stats.delta_cycles_max)) ? delta_cycles : stats.delta_cycles_max;
           stats.delta_cycles_sum += delta_cycles;
           stats.delta_cycles_sum2 += pow(delta_cycles,2);
         }
@@ -787,7 +787,7 @@ static void* tx_thread(void *p)
         double rms_read_time = sqrt ( stats.read_usecs_sum2 / stats.nsent_this_interval - mean_read_time * mean_read_time);
 
 
-        printf("%"PRIu64"u packets sent (%u packets in last %f seconds [%f Hz])", nsent, stats.nsent_this_interval, interval, stats.nsent_this_interval / interval);
+        printf("%"PRIu64" packets sent (%u packets in last %f seconds [%f Hz])", nsent, stats.nsent_this_interval, interval, stats.nsent_this_interval / interval);
         printf("    Buffer occupancy is %zu\n", current_written - current_read);
         printf("    Delta_cycles  mean is %f  +/- %f (min %u, max %u)\n", mean_delta_cycles, rms_delta_cycles, stats.delta_cycles_min, stats.delta_cycles_max);
         printf("    read time elapsed  mean is %f  +/- %f (min %u, max %u)\n", mean_read_time, rms_read_time, stats.read_usecs_min, stats.read_usecs_max);

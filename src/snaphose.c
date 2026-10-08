@@ -773,7 +773,12 @@ static void* tx_thread(void *p)
           if (delta >  T/2) delta -= T;
           if (delta <  -T/2) delta += T;
           if (delta < 0) stats.out_of_order++;
-          if (delta == 0) stats.no_elapsed++;
+          if (delta == 0)
+          {
+            printf(" no elapsed at count = %u\n", d->snap_cycle_count);
+                
+            stats.no_elapsed++;
+          }
 
           uint32_t delta_cycles = delta < 0 ? -delta : delta;
 

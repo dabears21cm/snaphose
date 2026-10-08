@@ -109,6 +109,7 @@ static struct
   uint32_t read_usecs_max;
   double read_usecs_sum;
   double read_usecs_sum2;
+  uint32_t out_of_order;
 } stats;
 
 
@@ -755,15 +756,20 @@ static void* tx_thread(void *p)
         stats.nsent_this_interval++;
         if (nsent)
         {
-          uint32_t delta_cycles = d->snap_cycle_count - last_cycles;
+          int delta_cycles = d->snap_cycle_count - last_cycles;
+          if (delta_cycles < 0) 
+          {
+            delta_cycles*=1;  // force positive, maybe can read out of order?
+            stats.out_of_order++;
+          }
           stats.delta_cycles_min = (!stats.delta_cycles_min || (delta_cycles < stats.delta_cycles_min)) ? delta_cycles : stats.delta_cycles_min;
           stats.delta_cycles_max = (!stats.delta_cycles_max || (delta_cycles > stats.delta_cycles_max)) ? delta_cycles : stats.delta_cycles_max;
           stats.delta_cycles_sum += delta_cycles;
           stats.delta_cycles_sum2 += pow(delta_cycles,2);
         }
 
-        stats.read_usecs_min =  (!stats.read_usecs_min || d->us_elapsed_while_reading < stats.read_usecs_min) ? d->us_elapsed_while_reading : stats.read_usecs_min;
-        stats.read_usecs_max =  (!stats.read_usecs_max || d->us_elapsed_while_reading > stats.read_usecs_max) ? d->us_elapsed_while_reading : stats.read_usecs_max;
+        stats.read_usecs_min =  (!stats.read_usecs_min || (d->us_elapsed_while_reading < stats.read_usecs_min)) ? d->us_elapsed_while_reading : stats.read_usecs_min;
+        stats.read_usecs_max =  (!stats.read_usecs_max || (d->us_elapsed_while_reading > stats.read_usecs_max)) ? d->us_elapsed_while_reading : stats.read_usecs_max;
         stats.read_usecs_sum += d->us_elapsed_while_reading;
         stats.read_usecs_sum2 += pow(d->us_elapsed_while_reading,2);
 
@@ -788,9 +794,12 @@ static void* tx_thread(void *p)
 
 
         printf("%"PRIu64" packets sent (%u packets in last %f seconds [%f Hz])", nsent, stats.nsent_this_interval, interval, stats.nsent_this_interval / interval);
-        printf("    Buffer occupancy is %zu\n", current_written - current_read);
-        printf("    Delta_cycles  mean is %f  +/- %f (min %u, max %u)\n", mean_delta_cycles, rms_delta_cycles, stats.delta_cycles_min, stats.delta_cycles_max);
-        printf("    read time elapsed  mean is %f  +/- %f (min %u, max %u)\n", mean_read_time, rms_read_time, stats.read_usecs_min, stats.read_usecs_max);
+        if (stats.nsent_this_interval)
+        {
+          printf("    Buffer occupancy is %zu.  %u packets out of order.\n", current_written - current_read, stats.out_of_order);
+          printf("    Delta_cycles  mean is %f  +/- %f (min %u, max %u)\n", mean_delta_cycles, rms_delta_cycles, stats.delta_cycles_min, stats.delta_cycles_max);
+          printf("    read time elapsed  mean is %f  +/- %f (min %u, max %u)\n", mean_read_time, rms_read_time, stats.read_usecs_min, stats.read_usecs_max);
+        }
 
         memset(&stats,0,sizeof(stats));
         memcpy(&last_stats, &now, sizeof(now));
@@ -1065,7 +1074,7 @@ static void*  read_thread(void * v)
           d->readout_cpu_time.utc_secs = now_rt.tv_sec;
           d->readout_cpu_time.utc_nsecs = now_rt.tv_nsec;
           clock_gettime(CLOCK_REALTIME, &now_rt);
-          uint32_t us =  1e6* ( now_rt.tv_sec-d->readout_cpu_time.utc_secs) + 1e-3 * ( now_rt.tv_nsec - d->readout_cpu_time.utc_nsecs);
+          uint32_t us =  1e6* ( now_rt.tv_sec-d->readout_cpu_time.utc_secs) + 1e-3 * ( ((uint32_t) now_rt.tv_nsec) - d->readout_cpu_time.utc_nsecs);
           d->us_elapsed_while_reading = us > 65535 ? 65535 : us;
 
           //commit buffer and grab another

@@ -1074,7 +1074,7 @@ static void*  read_thread(void * v)
           //read out actual values
           //memcpy might not work here, so read one word at a time? 
 
-#if 0
+#if 1
           volatile uint64_t * start_word = (volatile uint64_t*) &fpga[setup[isnap].bram];
           uint64_t *output  =(uint64_t*) &d->packed_samples[0];
 
@@ -1090,13 +1090,11 @@ static void*  read_thread(void * v)
           uint64_t *output  =(uint64_t*) &d->packed_samples[0];
           memcpy(output, start_word, data_bits *nsamples / 8);
 
-
-
 #endif
 
           if (verify_words)
           {
-            size_t verify_start_index = read_counter % ( data_bits *nsamples/32 - verify_words);
+            size_t verify_start_index = read_counter % ( data_bits *nsamples/32 - verify_words + 1);
             volatile uint32_t * start_test_word = (volatile uint32_t*) &fpga[setup[isnap].bram] + verify_start_index;
             volatile uint32_t * stop_test_word = start_test_word + verify_words;
             const uint32_t *test  =(uint32_t*) &d->packed_samples[0] + verify_start_index;
@@ -1137,8 +1135,8 @@ static void*  read_thread(void * v)
         }
       }
 
-//      //sleep 200 us
-//      if (state == SNAPHOSE_RUN) usleep(20);
+      //sleep 100 us
+      if (state == SNAPHOSE_RUN) usleep(100);
     }
   }
   return NULL;

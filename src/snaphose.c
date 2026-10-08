@@ -1053,6 +1053,7 @@ static void*  read_thread(void * v)
           //read out actual values
           //memcpy might not work here, so read one word at a time? 
 
+#if 0
           volatile uint32_t * start_word = (volatile uint32_t*) &fpga[setup[isnap].bram];
           uint32_t *output  =(uint32_t*) &d->packed_samples[0];
 
@@ -1064,6 +1065,22 @@ static void*  read_thread(void * v)
             *output++ = *word++;
           }
 
+#else
+
+          volatile uint64_t * start_word = (volatile uint64_t*) &fpga[setup[isnap].bram];
+          uint64_t *output  =(uint64_t*) &d->packed_samples[0];
+
+          volatile uint64_t * stop_word = start_word + (data_bits>>6) * nsamples;
+
+          // TODO I can handle the endianness swap here, I guess, rather than on readout? 
+          for (volatile uint64_t * word = start_word; word < stop_word; )
+          {
+            *output++ = *word++;
+          }
+
+
+
+#endif
           // start next loop on next block
           start_snap =( isnap + 1) % nblocks;
 

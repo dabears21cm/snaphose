@@ -1074,7 +1074,7 @@ static void*  read_thread(void * v)
           d->readout_cpu_time.utc_secs = now_rt.tv_sec;
           d->readout_cpu_time.utc_nsecs = now_rt.tv_nsec;
           clock_gettime(CLOCK_REALTIME, &now_rt);
-          uint32_t us =  1e6* ( now_rt.tv_sec-d->readout_cpu_time.utc_secs) + 1e-3 * ( ((uint64_t) now_rt.tv_nsec) - d->readout_cpu_time.utc_nsecs);
+          uint32_t us =  1e6* ( now_rt.tv_sec-d->readout_cpu_time.utc_secs) + 1e-3 * ( (int)now_rt.tv_nsec - (int)d->readout_cpu_time.utc_nsecs);
           d->us_elapsed_while_reading = us > 65535 ? 65535 : us;
 
           //commit buffer and grab another

@@ -756,12 +756,15 @@ static void* tx_thread(void *p)
         stats.nsent_this_interval++;
         if (nsent)
         {
-          uint32_t delta_cycles = d->snap_cycle_count - last_cycles;
-          if (delta_cycles >  (1 << 31) ) 
-          {
-            delta_cycles = -delta_cycles;
-            stats.out_of_order++;
-          }
+          int64_t T = d->last_pps_duration; 
+          if (T < 100e6) T = 125e6;
+          int64_t delta = (int64_t) d->snap_cycle_count - (int64_t) last_cycles;
+          if (delta >  T/2) delta -= T;
+          if (delta <  -T/2) delta += T;
+          if (delta < 0) stats.out_of_order++;
+
+          uint32_t delta_cycles = delta < 0 ? -delta : delta;
+
           stats.delta_cycles_min = (!stats.delta_cycles_min || (delta_cycles < stats.delta_cycles_min)) ? delta_cycles : stats.delta_cycles_min;
           stats.delta_cycles_max = (!stats.delta_cycles_max || (delta_cycles > stats.delta_cycles_max)) ? delta_cycles : stats.delta_cycles_max;
           stats.delta_cycles_sum += delta_cycles;

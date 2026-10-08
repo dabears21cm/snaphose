@@ -759,7 +759,7 @@ static void* tx_thread(void *p)
           int delta_cycles = d->snap_cycle_count - last_cycles;
           if (delta_cycles < 0) 
           {
-            delta_cycles*=1;  // force positive, maybe can read out of order?
+            delta_cycles*=-1;  // force positive, maybe can read out of order?
             stats.out_of_order++;
           }
           stats.delta_cycles_min = (!stats.delta_cycles_min || (delta_cycles < stats.delta_cycles_min)) ? delta_cycles : stats.delta_cycles_min;
@@ -1074,7 +1074,7 @@ static void*  read_thread(void * v)
           d->readout_cpu_time.utc_secs = now_rt.tv_sec;
           d->readout_cpu_time.utc_nsecs = now_rt.tv_nsec;
           clock_gettime(CLOCK_REALTIME, &now_rt);
-          uint32_t us =  1e6* ( now_rt.tv_sec-d->readout_cpu_time.utc_secs) + 1e-3 * ( ((uint32_t) now_rt.tv_nsec) - d->readout_cpu_time.utc_nsecs);
+          uint32_t us =  1e6* ( now_rt.tv_sec-d->readout_cpu_time.utc_secs) + 1e-3 * ( ((uint64_t) now_rt.tv_nsec) - d->readout_cpu_time.utc_nsecs);
           d->us_elapsed_while_reading = us > 65535 ? 65535 : us;
 
           //commit buffer and grab another

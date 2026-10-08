@@ -113,6 +113,7 @@ static struct
   double read_usecs_sum;
   double read_usecs_sum2;
   uint32_t out_of_order;
+  uint32_t no_elapsed;
 } stats;
 
 
@@ -772,6 +773,7 @@ static void* tx_thread(void *p)
           if (delta >  T/2) delta -= T;
           if (delta <  -T/2) delta += T;
           if (delta < 0) stats.out_of_order++;
+          if (delta == 0) stats.no_elapsed++;
 
           uint32_t delta_cycles = delta < 0 ? -delta : delta;
 
@@ -806,10 +808,10 @@ static void* tx_thread(void *p)
         double rms_read_time = sqrt ( stats.read_usecs_sum2 / stats.nsent_this_interval - mean_read_time * mean_read_time);
 
 
-        printf("%"PRIu64" packets sent (%u packets in last %f seconds [%f Hz])", nsent, stats.nsent_this_interval, interval, stats.nsent_this_interval / interval);
+        printf("%"PRIu64" packets sent (%u packets in last %f seconds [%f Hz])\n", nsent, stats.nsent_this_interval, interval, stats.nsent_this_interval / interval);
         if (stats.nsent_this_interval)
         {
-          printf("    Buffer occupancy is %zu.  %u packets out of order.\n", current_written - current_read, stats.out_of_order);
+          printf("    Buffer occupancy is %zu %u packets out of order, %u packets no elapsed.\n", current_written - current_read, stats.out_of_order, stats.no_elapsed);
           printf("    Delta_cycles  mean is %f  +/- %f (min %u, max %u)\n", mean_delta_cycles, rms_delta_cycles, stats.delta_cycles_min, stats.delta_cycles_max);
           printf("    read time elapsed  mean is %f  +/- %f (min %u, max %u)\n", mean_read_time, rms_read_time, stats.read_usecs_min, stats.read_usecs_max);
         }

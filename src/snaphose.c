@@ -95,6 +95,7 @@ static uint32_t buffer_size_mask = 0xff;
 static int watchdog_interval = 10;
 static uint32_t accum_len = 0;
 static uint32_t print_every = 0;
+static uint32_t verify_words = 8;
 static uint32_t stats_interval = 10;
 static uint32_t hsk_interval = 5;
 
@@ -1053,51 +1054,36 @@ static void*  read_thread(void * v)
           //read out actual values
           //memcpy might not work here, so read one word at a time? 
 
-#if 0
-          volatile uint32_t * start_word = (volatile uint32_t*) &fpga[setup[isnap].bram];
-          uint32_t *output  =(uint32_t*) &d->packed_samples[0];
-
-          volatile uint32_t * stop_word = start_word + (data_bits>>5) * nsamples;
-
-          // TODO I can handle the endianness swap here, I guess, rather than on readout? 
-          for (volatile uint32_t * word = start_word; word < stop_word; )
-          {
-            *output++ = *word++;
-          }
-
-#else
-
           volatile uint64_t * start_word = (volatile uint64_t*) &fpga[setup[isnap].bram];
           uint64_t *output  =(uint64_t*) &d->packed_samples[0];
 
-          volatile uint64_t * stop_word = start_word + (data_bits>>6) * nsamples;
-
-          // TODO I can handle the endianness swap here, I guess, rather than on readout? 
+          volatile uint64_t * stop_word = start_word + (data_bits*nsamples)/64;
+ 
           for (volatile uint64_t * word = start_word; word < stop_word; )
           {
             *output++ = *word++;
           }
 
-          //verify first 8 words
-          volatile uint32_t * start_test_word = (volatile uint32_t*) &fpga[setup[isnap].bram];
-          volatile uint32_t * stop_test_word = start_test_word + 8;
-          const uint32_t *test  =(uint32_t*) &d->packed_samples[0];
-
-          // TODO I can handle the endianness swap here, I guess, rather than on readout? 
-          for (volatile uint32_t * word = start_test_word; word < stop_test_word; )
+          if (verify_words)
           {
-            if (*test != *word)
-            {
-              fprintf(stderr," VERIFY ERROR %x %x\n", *test, *word);
+            size_t verify_start_index = read_counter % ( data_bits *nsamples/32 - verify_words);
+            volatile uint32_t * start_test_word = (volatile uint32_t*) &fpga[setup[isnap].bram] + verify_start_index;
+            volatile uint32_t * stop_test_word = start_test_word + verify_words;
+            const uint32_t *test  =(uint32_t*) &d->packed_samples[0] + verify_start_index;
 
+            for (volatile uint32_t * word = start_test_word; word < stop_test_word; )
+            {
+              if (*test != *word)
+              {
+                fprintf(stderr," VERIFY ERROR %x %x\n", *test, *word);
+
+              }
+              word++;
+              test++;
             }
-            word++;
-            test++;
           }
 
-         
 
-#endif
           // start next loop on next block
           start_snap =( isnap + 1) % nblocks;
 

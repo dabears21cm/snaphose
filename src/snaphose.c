@@ -756,7 +756,7 @@ static void* tx_thread(void *p)
         stats.nsent_this_interval++;
         if (nsent)
         {
-          int64_t T = d->last_pps_duration; 
+          int64_t T = d->last_pps_duration;
           if (T < 100e6) T = 125e6;
           int64_t delta = (int64_t) d->snap_cycle_count - (int64_t) last_cycles;
           if (delta >  T/2) delta -= T;
@@ -1087,8 +1087,8 @@ static void*  read_thread(void * v)
         }
       }
 
-      //sleep 200 us
-      if (state == SNAPHOSE_RUN) usleep(200);
+//      //sleep 200 us
+//      if (state == SNAPHOSE_RUN) usleep(20);
     }
   }
   return NULL;

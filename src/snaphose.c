@@ -1074,6 +1074,7 @@ static void*  read_thread(void * v)
           //read out actual values
           //memcpy might not work here, so read one word at a time? 
 
+#if 0
           volatile uint64_t * start_word = (volatile uint64_t*) &fpga[setup[isnap].bram];
           uint64_t *output  =(uint64_t*) &d->packed_samples[0];
 
@@ -1083,6 +1084,15 @@ static void*  read_thread(void * v)
           {
             *output++ = *word++;
           }
+#else
+
+          uint64_t * start_word = (uint64_t*) &fpga[setup[isnap].bram];
+          uint64_t *output  =(uint64_t*) &d->packed_samples[0];
+          memcpy(output, start_word, data_bits *nsamples / 8);
+
+
+
+#endif
 
           if (verify_words)
           {

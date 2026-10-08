@@ -1078,7 +1078,24 @@ static void*  read_thread(void * v)
             *output++ = *word++;
           }
 
+          //verify first 8 words
+          volatile uint32_t * start_test_word = (volatile uint32_t*) &fpga[setup[isnap].bram];
+          volatile uint32_t * stop_test_word = start_test_word + 8;
+          const uint32_t *test  =(uint32_t*) &d->packed_samples[0];
 
+          // TODO I can handle the endianness swap here, I guess, rather than on readout? 
+          for (volatile uint32_t * word = start_test_word; word < stop_test_word; )
+          {
+            if (*test != *word)
+            {
+              fprintf(stderr," VERIFY ERROR %x %x\n", *test, *word);
+
+            }
+            word++;
+            test++;
+          }
+
+         
 
 #endif
           // start next loop on next block

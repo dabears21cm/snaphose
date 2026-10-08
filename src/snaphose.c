@@ -717,7 +717,7 @@ static void* tx_thread(void *p)
 
   struct timespec last_hsk_measure = { 0};
   uint64_t nsent = 0;
-  struct timespec last_stats = {0};
+  struct timespec last_stats = {program_start.tv_sec, program_start.tv_nsec};
   uint32_t last_cycles = 0;
 
 

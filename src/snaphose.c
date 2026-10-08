@@ -788,7 +788,7 @@ static void* tx_thread(void *p)
 
 
         printf("%"PRIu64"u packets sent (%u packets in last %f seconds [%f Hz])", nsent, stats.nsent_this_interval, interval, stats.nsent_this_interval / interval);
-        printf("    Buffer occupancy is %"PRIu64"u\n", current_written - current_read);
+        printf("    Buffer occupancy is %zu\n", current_written - current_read);
         printf("    Delta_cycles  mean is %f  +/- %f (min %u, max %u)\n", mean_delta_cycles, rms_delta_cycles, stats.delta_cycles_min, stats.delta_cycles_max);
         printf("    read time elapsed  mean is %f  +/- %f (min %u, max %u)\n", mean_read_time, rms_read_time, stats.read_usecs_min, stats.read_usecs_max);
 

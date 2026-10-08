@@ -811,7 +811,7 @@ static void* tx_thread(void *p)
         printf("%"PRIu64" packets sent (%u packets in last %f seconds [%f Hz])\n", nsent, stats.nsent_this_interval, interval, stats.nsent_this_interval / interval);
         if (stats.nsent_this_interval)
         {
-          printf("    Buffer occupancy is %zu %u packets out of order, %u packets no elapsed.\n", current_written - current_read, stats.out_of_order, stats.no_elapsed);
+          printf("    Buffer occupancy is %zu; %u packets out of order, %u packets no elapsed.\n", current_written - current_read, stats.out_of_order, stats.no_elapsed);
           printf("    Delta_cycles  mean is %f  +/- %f (min %u, max %u)\n", mean_delta_cycles, rms_delta_cycles, stats.delta_cycles_min, stats.delta_cycles_max);
           printf("    read time elapsed  mean is %f  +/- %f (min %u, max %u)\n", mean_read_time, rms_read_time, stats.read_usecs_min, stats.read_usecs_max);
         }
@@ -960,7 +960,7 @@ static int snap_arm(size_t i)
   while (arm)
   {
     write_reg(setup[i].arm,0);
-    read_reg(setup[i].arm,&arm);
+    for (int i =0; i < 5; i++)read_reg(setup[i].arm,&arm);
     if (num_iter++ > 100) 
     {
       fprintf(stderr,"arm problem\n");

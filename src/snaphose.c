@@ -2,6 +2,7 @@
 #include <time.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <math.h>
 #include <pthread.h>
 #include <errno.h>
 #include <stdatomic.h>
@@ -94,6 +95,21 @@ static uint32_t buffer_size_mask = 0xff;
 static int watchdog_interval = 10;
 static uint32_t accum_len = 0;
 static uint32_t print_every = 0;
+static uint32_t stats_interval = 10;
+static uint32_t hsk_interval = 5;
+
+static struct
+{
+  uint32_t nsent_this_interval;
+  uint32_t delta_cycles_min;
+  uint32_t delta_cycles_max;
+  double delta_cycles_sum;
+  double delta_cycles_sum2;
+  uint32_t read_usecs_min;
+  uint32_t read_usecs_max;
+  double read_usecs_sum;
+  double read_usecs_sum2;
+} stats;
 
 
 static struct
@@ -191,6 +207,7 @@ static int setup_handler(void * user, const char * section, const char * name, c
     if (!strcmp(name,"verbose")) return !boolish(val, &verbose);
     else if (!strcmp(name,"watchdog")) watchdog_interval = atoi(val);
     else if (!strcmp(name,"print_every")) print_every = atoi(val);
+    else if (!strcmp(name,"stats_interval")) stats_interval = atoi(val);
     else
     {
       fprintf(stderr, "Unknown key %s.%s\n", section,name);
@@ -700,6 +717,9 @@ static void* tx_thread(void *p)
 
   struct timespec last_hsk_measure = { 0};
   uint64_t nsent = 0;
+  struct timespec last_stats = {0};
+  uint32_t last_cycles = 0;
+
 
   while (state < SNAPHOSE_DIE)
   {
@@ -710,7 +730,7 @@ static void* tx_thread(void *p)
     {
       struct timespec now;
       struct timespec now_rt;
-      clock_gettime(CLOCK_MONOTONIC, &now);
+      clock_gettime(CLOCK_MONOTONIC_COARSE, &now);
       clock_gettime(CLOCK_REALTIME, &now_rt);
       d->ver_magic = SNAPHOSE_VER_MAGIC;
       d->nfreqbins = nsamples;
@@ -721,7 +741,7 @@ static void* tx_thread(void *p)
       d->hsk.uptime.red_pitaya = (now.tv_sec)/60;
       d->send_cpu_time.utc_secs = now_rt.tv_sec;
       d->send_cpu_time.utc_nsecs = now_rt.tv_nsec;
-      if ( now.tv_sec - last_hsk_measure.tv_sec > 5)
+      if ( now.tv_sec - last_hsk_measure.tv_sec > hsk_interval)
       {
         update_hsk();
         memcpy(&last_hsk_measure, &now, sizeof(now));
@@ -729,9 +749,52 @@ static void* tx_thread(void *p)
       d->hsk.temps.red_pitaya = hsk.core_temp; 
 
       send(fd, d, buffer_elem_sz, 0);
-      if (print_every && ((nsent % print_every) == 0)) snaphose_dump(stdout, d);
+
+      if (stats_interval)
+      {
+        stats.nsent_this_interval++;
+        if (nsent)
+        {
+          uint32_t delta_cycles = d->snap_cycle_count - last_cycles;
+          stats.delta_cycles_min = (!stats.delta_cycles_min || delta_cycles < stats.delta_cycles_min) ? delta_cycles : stats.delta_cycles_min;
+          stats.delta_cycles_max = (!stats.delta_cycles_max || delta_cycles > stats.delta_cycles_max) ? delta_cycles : stats.delta_cycles_max;
+          stats.delta_cycles_sum += delta_cycles;
+          stats.delta_cycles_sum2 += pow(delta_cycles,2);
+        }
+
+        stats.read_usecs_min =  (!stats.read_usecs_min || d->us_elapsed_while_reading < stats.read_usecs_min) ? d->us_elapsed_while_reading : stats.read_usecs_min;
+        stats.read_usecs_max =  (!stats.read_usecs_max || d->us_elapsed_while_reading > stats.read_usecs_max) ? d->us_elapsed_while_reading : stats.read_usecs_max;
+        stats.read_usecs_sum += d->us_elapsed_while_reading;
+        stats.read_usecs_sum2 += pow(d->us_elapsed_while_reading,2);
+
+        last_cycles = d->snap_cycle_count;
+      }
       nsent++;
+      if (print_every && ((nsent % print_every) == 0)) snaphose_dump(stdout, d);
+
+
       buffer_drop();
+      if (stats_interval && (now.tv_sec - last_stats.tv_sec > stats_interval))
+      {
+        double interval = now.tv_sec - last_stats.tv_sec + 1e-9 * (now.tv_nsec - last_stats.tv_nsec);
+        size_t current_written = atomic_load_explicit(&buffer_written_shared.val, memory_order_relaxed);
+        size_t current_read = atomic_load_explicit(&buffer_read_shared.val, memory_order_acquire);
+
+        int ndelta_cycles = nsent == stats.nsent_this_interval ? stats.nsent_this_interval-1 : stats.nsent_this_interval;
+        double mean_delta_cycles = stats.delta_cycles_sum  / ndelta_cycles;
+        double rms_delta_cycles = sqrt ( stats.delta_cycles_sum2 / ndelta_cycles - mean_delta_cycles * mean_delta_cycles);
+        double mean_read_time = stats.read_usecs_sum  / stats.nsent_this_interval;
+        double rms_read_time = sqrt ( stats.read_usecs_sum2 / stats.nsent_this_interval - mean_read_time * mean_read_time);
+
+
+        printf("%"PRIu64"u packets sent (%u packets in last %f seconds [%f Hz])", nsent, stats.nsent_this_interval, interval, stats.nsent_this_interval / interval);
+        printf("    Buffer occupancy is %"PRIu64"u\n", current_written - current_read);
+        printf("    Delta_cycles  mean is %f  +/- %f (min %u, max %u)\n", mean_delta_cycles, rms_delta_cycles, stats.delta_cycles_min, stats.delta_cycles_max);
+        printf("    read time elapsed  mean is %f  +/- %f (min %u, max %u)\n", mean_read_time, rms_read_time, stats.read_usecs_min, stats.read_usecs_max);
+
+        memset(&stats,0,sizeof(stats));
+        memcpy(&last_stats, &now, sizeof(now));
+      }
     }
 
     usleep(100);

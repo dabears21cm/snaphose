@@ -150,8 +150,10 @@ static inline uint64_t snaphose_nth_sample_u64(const snaphose_data_t *s, size_t 
   switch (s->nbits_per_bin)
   {
     case 64:
-      uint64_t u64 = (((uint64_t*) s->packed_samples)[i]);
-      return WORDSWAP64(u64);
+      {
+        uint64_t u64 = (((uint64_t*) s->packed_samples)[i]);
+        return WORDSWAP64(u64);
+      }
     case 32:
       return (((uint32_t*) s->packed_samples)[i]);
     case 16:

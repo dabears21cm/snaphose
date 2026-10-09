@@ -20,11 +20,13 @@ int snaphose_dump(FILE * f, const snaphose_data_t * s)
   out += fprintf(f, "                             },\n");
   out += fprintf(f, "                     .samples_dB = {\n");
 
+  double dBoffset = - SNAPHOSE_DB_OFFSET( s->nfreqbins, s->accum_length);
+  dBoffset -= 10 * log10(125e6/s->nfreqbins);
   for (int i = 0; i < s->nfreqbins; i++)
   {
     uint64_t val = snaphose_nth_sample_u64(s,i);
-    double dB = 10 * log10(val) - SNAPHOSE_DB_OFFSET( s->nfreqbins, s->accum_length);;
-    out += fprintf(f, "                %f MHz: %0.3f dB / %012"PRIx64" \n", ((i < s->nfreqbins/2) ? i : i-s->nfreqbins  ) * 125./ (s->nfreqbins),dB, val);
+    double dB = 10 * log10(val) - dBoffset; 
+    out += fprintf(f, "                %f MHz: %0.3f dBm/Hz / %012"PRIx64" \n", ((i < s->nfreqbins/2) ? i : i-s->nfreqbins  ) * 125./ (s->nfreqbins),dB, val);
   }
 
   out += fprintf(f, "                               }\n");

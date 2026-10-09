@@ -21,7 +21,7 @@ int snaphose_dump(FILE * f, const snaphose_data_t * s)
   out += fprintf(f, "                     .samples_dB = {\n");
 
   double dBoffset =  SNAPHOSE_DB_OFFSET( s->nfreqbins, s->accum_length);
-  dBoffset -= 10 * log10(125e6/s->nfreqbins);
+  dBoffset += 10 * log10(125e6/s->nfreqbins);
   for (int i = 0; i < s->nfreqbins; i++)
   {
     uint64_t val = snaphose_nth_sample_u64(s,i);

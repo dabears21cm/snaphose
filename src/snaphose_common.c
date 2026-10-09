@@ -23,7 +23,7 @@ int snaphose_dump(FILE * f, const snaphose_data_t * s)
   for (int i = 0; i < s->nfreqbins; i++)
   {
     uint64_t val = snaphose_nth_sample_u64(s,i);
-    double dB = 10 * log10(val);
+    double dB = 10 * log10(val) - SNAPHOSE_DB_OFFSET( s->nfreqbins, s->accum_length);;
     out += fprintf(f, "                %f MHz: %0.3f dB / %012"PRIx64" \n", ((i < s->nfreqbins/2) ? i : i-s->nfreqbins  ) * 125./ (s->nfreqbins),dB, val);
   }
 

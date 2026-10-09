@@ -138,6 +138,10 @@ typedef struct snaphose_data
 #define SNAPHOSE_PACKED_DATA_SIZE(NUM_BITS, NUM_SAMPLES)   ((((NUM_BITS * NUM_SAMPLES) + 511) >> 9) << 6)
 #define SNAPHOSE_DATA_SIZE_NEEDED(NUM_BITS, NUM_SAMPLES)  sizeof(snaphose_data_t) + SNAPHOSE_PACKED_DATA_SIZE(NUM_BITS, NUM_SAMPLES)
 
+// not including amp gain, just RP ADC conversion and unnormalized FFT
+// 65.27 is from 1000 * (V^2)/50 ohms where we convert to ADC
+#define SNAPHOSE_DB_OFFSET(NSAMPLES, ACCUM)  (  20 * log10(NSAMPLES)   -65.27 - 10 *log10(ACCUM))
+
 #define WORDSWAP64(X) (((X) << 32) |  ((X) >> 32))
 
 int snaphose_dump(FILE * f, const snaphose_data_t * s);

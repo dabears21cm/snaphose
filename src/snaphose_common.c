@@ -19,13 +19,12 @@ int snaphose_dump(FILE * f, const snaphose_data_t * s)
   out += fprintf(f, "                               .temps = { .red_pitaya = %hhd, .w1_probe = %hhd, .cal_board = %hhd, .ssd = %hhd},\n", s->hsk.temps.red_pitaya, s->hsk.temps.w1_probe, s->hsk.temps.cal_board, s->hsk.temps.ssd);
   out += fprintf(f, "                             },\n");
   out += fprintf(f, "                     .samples_dB = {\n");
-  out += fprintf(f, "                        ");
 
   for (int i = 0; i < s->nfreqbins; i++)
   {
     uint64_t val = snaphose_nth_sample_u64(s,i);
     double dB = 10 * log10(val);
-    out += fprintf(f, "%f MHz: %0.3f / %"PRIu64" \n", i * 125./ (s->nfreqbins/2),dB, val);
+    out += fprintf(f, "                %f MHz: %0.3f dB / %048"PRIx64" \n", i * 125./ (s->nfreqbins/2),dB, val);
   }
 
   out += fprintf(f, "                               }\n");

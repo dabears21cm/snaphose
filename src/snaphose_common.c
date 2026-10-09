@@ -39,9 +39,8 @@ int snaphose_unpack_samples_u64(const snaphose_data_t * s,  uint32_t dest_sz,  u
 {
   if (s->nbits_per_bin == 64)
   {
-    int pad = s->npad_bits_set ? s->npad_bits : 16;
-    uint64_t * as_u64 = (uint64_t *) s->packed_samples;
-    for (uint32_t i = 0; i < dest_sz; i++) dest[i] = (as_u64[i]>>pad);
+    const uint64_t * as_u64 = (uint64_t *) s->packed_samples;
+    for (uint32_t i = 0; i < dest_sz; i++) dest[i] = WORDSWAP64(as_u64[i]);
   }
   else
   {
@@ -82,7 +81,6 @@ int snaphose_unpack_samples_f32(const snaphose_data_t * s,  uint32_t dest_sz,  f
 
   if (s->nbits_per_bin == 64)
   {
-    int pad = s->npad_bits_set ? s->npad_bits : 16;
     uint32_t i = 0;
     uint64_t * as_u64 = (uint64_t *) s->packed_samples;
 
@@ -92,7 +90,7 @@ int snaphose_unpack_samples_f32(const snaphose_data_t * s,  uint32_t dest_sz,  f
     {
       u64_vec chunk;
       __builtin_memcpy(&chunk, &as_u64[i], sizeof(u64_vec));
-      float_half_vec result = __builtin_convertvector(chunk >> pad, float_half_vec);
+      float_half_vec result = __builtin_convertvector(WORDSWAP64(chunk), float_half_vec);
       __builtin_memcpy(&dest[i], &result, sizeof(float_half_vec));
     }
 #else
@@ -100,13 +98,12 @@ int snaphose_unpack_samples_f32(const snaphose_data_t * s,  uint32_t dest_sz,  f
 #endif
 
     //cleanup loop
-    for (; i < dest_sz; i++) dest[i] = (float) (as_u64[i] >> pad);
+    for (; i < dest_sz; i++) dest[i] = (float) WORDSWAP64(as_u64[i]);;
   }
   else if (s->nbits_per_bin == 32)
   {
     uint32_t i = 0;
     uint32_t * as_u32 = (uint32_t *) s->packed_samples;
-    int pad = s->npad_bits_set ? s->npad_bits : 0;
 
 #if (__GNUC__ > 8)
 #pragma GCC unroll 4
@@ -114,12 +111,12 @@ int snaphose_unpack_samples_f32(const snaphose_data_t * s,  uint32_t dest_sz,  f
     {
       u32_vec chunk;
       __builtin_memcpy(&chunk, &as_u32[i], sizeof(u32_vec));
-      float_vec result = __builtin_convertvector(chunk >> pad, float_vec);
+      float_vec result = __builtin_convertvector(chunk, float_vec);
       __builtin_memcpy(&dest[i], &result, sizeof(float_vec));
     }
 #endif
     //cleanup loop
-    for (; i < dest_sz; i++) dest[i] = (float) (as_u32[i] >> pad);
+    for (; i < dest_sz; i++) dest[i] = (float) as_u32[i] ;
   }
   else
   {
@@ -138,7 +135,6 @@ int snaphose_unpack_samples_f64(const snaphose_data_t * s ,  uint32_t dest_sz,  
   {
     uint32_t i = 0;
     uint64_t * as_u64 = (uint64_t *) s->packed_samples;
-    int pad = s->npad_bits_set ? s->npad_bits : 16;
 
 #if (__GNUC__ > 8)
 #pragma GCC unroll 4
@@ -146,19 +142,18 @@ int snaphose_unpack_samples_f64(const snaphose_data_t * s ,  uint32_t dest_sz,  
     {
       u64_vec chunk;
       __builtin_memcpy(&chunk, &as_u64[i], sizeof(u64_vec));
-      double_vec result = __builtin_convertvector(chunk >> pad, double_vec);
+      double_vec result = __builtin_convertvector( WORDSWAP64(chunk), double_vec);
       __builtin_memcpy(&dest[i], &result, sizeof(double_vec));
     }
 
 #endif
     //cleanup loop (or old compilers)
-    for (; i < dest_sz; i++) dest[i] = (double) (as_u64[i] >> pad);
+    for (; i < dest_sz; i++) dest[i] = (double) WORDSWAP64(as_u64[i]) ;
   }
   else if (s->nbits_per_bin == 32)
   {
     uint32_t i = 0;
     uint32_t * as_u32 = (uint32_t *) s->packed_samples;
-    int pad = s->npad_bits_set ? s->npad_bits : 0;
 
 #if (__GNUC__ > 8)
 #pragma GCC unroll 4
@@ -166,13 +161,13 @@ int snaphose_unpack_samples_f64(const snaphose_data_t * s ,  uint32_t dest_sz,  
     {
       u32_half_vec chunk;
       __builtin_memcpy(&chunk, &as_u32[i], sizeof(u32_half_vec));
-      double_vec result = __builtin_convertvector(chunk >> pad, double_vec);
+      double_vec result = __builtin_convertvector(chunk,  double_vec);
       __builtin_memcpy(&dest[i], &result, sizeof(double_vec));
     }
 #endif
 
     //cleanup loop
-    for (; i < dest_sz; i++) dest[i] = (double) (as_u32[i] >> pad);
+    for (; i < dest_sz; i++) dest[i] = (double) (as_u32[i]);
   }
   else
   {

@@ -138,6 +138,7 @@ typedef struct snaphose_data
 #define SNAPHOSE_PACKED_DATA_SIZE(NUM_BITS, NUM_SAMPLES)   ((((NUM_BITS * NUM_SAMPLES) + 511) >> 9) << 6)
 #define SNAPHOSE_DATA_SIZE_NEEDED(NUM_BITS, NUM_SAMPLES)  sizeof(snaphose_data_t) + SNAPHOSE_PACKED_DATA_SIZE(NUM_BITS, NUM_SAMPLES)
 
+#define WORDSWAP64(X) (((X) << 32) |  ((X) >> 32))
 
 int snaphose_dump(FILE * f, const snaphose_data_t * s);
 
@@ -146,38 +147,21 @@ static inline uint64_t snaphose_nth_sample_u64(const snaphose_data_t *s, size_t 
 {
   if (i >= s->nfreqbins)  return (uint64_t) -1;
 
-  int pad = s->npad_bits_set ? s->npad_bits :  ( s->nbits_per_bin == 64 ? 16 : 0);
   switch (s->nbits_per_bin)
   {
     case 64:
-      return (((uint64_t*) s->packed_samples)[i]) >> pad;
+      uint64_t u64 = (((uint64_t*) s->packed_samples)[i]);
+      return WORDSWAP64(u64);
     case 32:
-      return (((uint32_t*) s->packed_samples)[i]) >> pad;
+      return (((uint32_t*) s->packed_samples)[i]);
     case 16:
-      return (((uint16_t*) s->packed_samples)[i]) >> pad;
+      return (((uint16_t*) s->packed_samples)[i]);
     case 8:
-      return s->packed_samples[i] >> pad;
+      return s->packed_samples[i];
     default:
+      return (uint64_t) -1;
       break;
   }
-  // If we ever ahave nbits_per_in not 64, we should check/optimize this
-  //
-  uint64_t val = 0;
-
-
-  size_t bin = (i * s->nbits_per_bin) >>6;
-  uint8_t start_bit = (i * s->nbits_per_bin) % 64;
-  uint8_t bits_first_double_word = (s->nbits_per_bin - start_bit) % 64;
-  uint8_t bits_second_double_word = bits_first_double_word == s->nbits_per_bin ? 0 : s->nbits_per_bin - bits_first_double_word;
-  val = (((uint64_t*) s->packed_samples)[bin] >> start_bit); 
-  val &= (bits_first_double_word ==64) ?  UINT64_MAX :  ( 1 << bits_first_double_word) -1;
-
-  if (bits_second_double_word)
-    val += (((uint64_t*) s->packed_samples)[bin] & ((1 << bits_second_double_word)-1)) << bits_first_double_word;
-
-  val |= (1 << bits_second_double_word) -1;
-
-  return (val >> pad);
 }
 
 /** Unpack samples to a 64-bit array */

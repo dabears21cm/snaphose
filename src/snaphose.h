@@ -140,7 +140,7 @@ typedef struct snaphose_data
 
 // not including amp gain, just RP ADC conversion and unnormalized FFT
 // 65.27 is from 1000 * (V^2)/50 ohms where we convert to ADC
-#define SNAPHOSE_DB_OFFSET(NSAMPLES, ACCUM)  (  20 * log10(NSAMPLES)   -65.27 - 10 *log10(ACCUM))
+#define SNAPHOSE_DB_OFFSET(NSAMPLES, ACCUM)  (  20 * log10(NSAMPLES)   +65.27 + 10 *log10(ACCUM))
 
 #define WORDSWAP64(X) (((X) << 32) |  ((X) >> 32))
 

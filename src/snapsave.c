@@ -30,6 +30,7 @@
 
 static const char * data_out = "/data/spec/";
 static uint32_t spec_per_file = 100;
+static uint32_t secs_per_file = 10;
 static const char *hsk_file = "/data/housekeeping.json";
 static int hsk_interval = 10;
 
@@ -49,7 +50,28 @@ static void im_done_now_k_thx(int sig)
   done_now = 1;
 }
 
-static char current_filename[1024];
+static char current_filename[3][1024];
+
+
+static int src_to_idx(char src)
+{
+ return   src == 'A' ? 0  :
+          src == 'N' ? 1 :
+          src == 'T' ? 2 :
+                      -1;
+}
+
+
+static int idx_to_src(int idx)
+{
+ return   idx ==  0 ? 'A'  :
+          idx ==  1 ? 'N'  :
+          idx ==  2 ? 'T'  :
+                      'U';
+}
+
+
+
 
 int create_output_fd(char src, size_t sz)
 {
@@ -108,19 +130,21 @@ int create_output_fd(char src, size_t sz)
     }
   }
 
-  sprintf(current_filename,"%s/%d-%02d-%02d/%02d/%02d/%c.%02d.%06d.dabears", data_out, year, month, day, hour, min, src, tm->tm_sec, (int) (now.tv_nsec /1000));
+  int idx = src_to_idx(src);
 
-  int fd =  open(current_filename, O_CREAT | O_RDWR, 0644);
+  sprintf(current_filename[idx],"%s/%d-%02d-%02d/%02d/%02d/%c.%02d.%06d.dabears", data_out, year, month, day, hour, min, src, tm->tm_sec, (int) (now.tv_nsec /1000));
+
+  int fd =  open(current_filename[idx], O_CREAT | O_RDWR, 0644);
   if (fd < 0)
   {
-    fprintf(stderr,"Problem making %s (err %d, %s). Probably going to make you sad\n", current_filename, errno, strerror(errno));
+    fprintf(stderr,"Problem making %s (err %d, %s). Probably going to make you sad\n", current_filename[idx], errno, strerror(errno));
     return fd;
   }
   else
   {
     sprintf(scratchbuf, "%s/%c.CURRENT.dabears.tmp", data_out, src);
     unlink(scratchbuf);
-    if (symlink(current_filename, scratchbuf))
+    if (symlink(current_filename[idx], scratchbuf))
     {
       fprintf(stderr, "symlink failed\n");
     }
@@ -200,7 +224,8 @@ static int setup_handler(void * user, const char * section, const char * name, c
         return 0;
       }
     }
-    else if (!strcmp(name,"spectra_per_file")) spec_per_file = atoi(val);
+    else if (!strcmp(name,"max_spectra_per_file")) spec_per_file = atoi(val);
+    else if (!strcmp(name,"max_second_per_file")) secs_per_file = atoi(val);
     else if (!strcmp(name,"hsk_file")) hsk_file = strdup(val);
     else if (!strcmp(name,"hsk_interval")) hsk_interval = atoi(val);
     else 
@@ -303,12 +328,32 @@ static void update_hsk()
 }
 
 
+static int fds[3] = {-1,-1,-1};
+static uint32_t nwritten[3] = {0};
+static uint32_t started[3] = {0};
+static void close_file(int fd_index)
+{
+  printf("Closing %s\n", current_filename[fd_index]);
+  close(fds[fd_index]);
+  fds[fd_index] = -1;
+  nwritten[fd_index] = 0;
+  started[fd_index] = 0;
+  static char buf1[128];
+  //TODO can reuse these buffers rather than recreating them each time lol
+  char src = idx_to_src(fd_index);
+  sprintf(buf1, "%s/%c.CURRENT.dabears.tmp", data_out, src);
+  static char buf2[128];
+  sprintf(buf2, "%s/%c.CURRENT.dabears", data_out, src);
+  if (rename(buf1,buf2))
+  {
+     fprintf(stderr, "symlink rename problem\n");
+  }
+}
+
 int main(int nargs, char ** args)
 {
 
-  int fds[3] = {-1,-1,-1};
   size_t sz = 0;
-  uint32_t nwritten[3] = {0};
 
 
   struct timespec program_start;
@@ -416,6 +461,16 @@ int main(int nargs, char ** args)
       memcpy(&last_hsk, &now, sizeof(now));
     }
 
+    for (int i = 0; i < 3; i++)
+    {
+      if (secs_per_file && started[i] && ( now.tv_sec - started[i] > secs_per_file))
+      {
+        close_file(i);
+      }
+
+
+    }
+
     static union
     {
       snaphose_data_t d ;
@@ -519,10 +574,7 @@ int main(int nargs, char ** args)
       }
 
       //get file descriptor
-      int fd_index = d.d.source.which == 'A' ? 0  :
-                     d.d.source.which == 'N' ? 1 :
-                     d.d.source.which == 'T' ? 2 :
-                     -1;
+      int fd_index = src_to_idx(d.d.source.which);
 
 
       if (fd_index < 0)
@@ -533,25 +585,14 @@ int main(int nargs, char ** args)
 
       if (nwritten[fd_index] >= spec_per_file)
       {
-        printf("..done\n");
-        close(fds[fd_index]);
-        fds[fd_index] = -1;
-        nwritten[fd_index] = 0;
-        static char buf1[128];
-        //TODO can reuse these buffers rather than recreating them each time lol
-        sprintf(buf1, "%s/%c.CURRENT.dabears.tmp", data_out, d.d.source.which);
-        static char buf2[128];
-        sprintf(buf2, "%s/%c.CURRENT.dabears", data_out, d.d.source.which);
-        if (rename(buf1,buf2))
-        {
-          fprintf(stderr, "symlink rename problem\n");
-        }
-      }
+        close_file(fd_index);
+     }
 
       if (fds[fd_index] < 0) 
       {
         fds[fd_index] = create_output_fd(d.d.source.which, sz);
-        printf("Created %s...",current_filename);
+        printf("Created %s...\n",current_filename[fd_index]);
+        started[fd_index] = now.tv_sec;
         fflush(stdout);
       }
 

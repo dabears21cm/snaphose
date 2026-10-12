@@ -334,6 +334,7 @@ static uint32_t started[3] = {0};
 static void close_file(int fd_index)
 {
   printf("Closing %s\n", current_filename[fd_index]);
+  fflush(stdout);
   close(fds[fd_index]);
   fds[fd_index] = -1;
   nwritten[fd_index] = 0;

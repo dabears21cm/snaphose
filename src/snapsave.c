@@ -309,16 +309,16 @@ static void update_hsk()
     return;
   }
 
-#define X_DBL_DISPATCH(X) {#X , SD_JSON_VARIANT_NUMBER, sd_json_dispatch_double, offsetof(struct pi_hsk, X)},
-#define X_INT_DISPATCH(X) {#X , SD_JSON_VARIANT_NUMBER, sd_json_dispatch_int32, offsetof(struct pi_hsk, X)},
-#define X_BOOL_DISPATCH(X) {#X , SD_JSON_VARIANT_BOOLEAN, sd_json_dispatch_stdbool, offsetof(struct pi_hsk, X)},
+#define X_DBL_DISPATCH(X) {#X , SD_JSON_VARIANT_NUMBER, sd_json_dispatch_double, offsetof(struct pi_hsk, X), SD_JSON_NULLABLE},
+#define X_INT_DISPATCH(X) {#X , SD_JSON_VARIANT_NUMBER, sd_json_dispatch_int32, offsetof(struct pi_hsk, X), SD_JSON_NULLABLE},
+#define X_BOOL_DISPATCH(X) {#X , SD_JSON_VARIANT_BOOLEAN, sd_json_dispatch_stdbool, offsetof(struct pi_hsk, X) SD_JSON_NULLABLE},
 
   static const sd_json_dispatch_field table [] = {
   HSK_FIELDS(X_DBL_DISPATCH, X_BOOL_DISPATCH, X_INT_DISPATCH)
   {0}
   };
 
-  r = sd_json_dispatch(json, table, SD_JSON_ALLOW_EXTENSIONS | SD_JSON_NULLABLE, &hsk);
+  r = sd_json_dispatch(json, table, SD_JSON_ALLOW_EXTENSIONS , &hsk);
   sd_json_variant_unref(json);
   if (r < 0)
   {

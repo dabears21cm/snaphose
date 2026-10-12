@@ -280,9 +280,9 @@ static int read_setup_file( const char * s)
  X_DBL(load_1m)     \
  X_DBL(mem_avail_mb)     \
  X_DBL(uptime_h)     \
- X_INT(atten_A) \
- X_INT(atten_N) \
- X_INT(atten_T) \
+ X_DBL(atten_A) \
+ X_DBL(atten_N) \
+ X_DBL(atten_T) \
 
 #define X_DBL_DEF(X) double X;
 #define X_BOOL_DEF(X) int X;

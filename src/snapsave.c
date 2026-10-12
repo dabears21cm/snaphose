@@ -318,7 +318,7 @@ static void update_hsk()
   {0}
   };
 
-  r = sd_json_dispatch(json, table, SD_JSON_ALLOW_EXTENSIONS, &hsk);
+  r = sd_json_dispatch(json, table, SD_JSON_ALLOW_EXTENSIONS | SD_JSON_NULLABLE, &hsk);
   sd_json_variant_unref(json);
   if (r < 0)
   {

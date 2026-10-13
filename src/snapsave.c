@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <math.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -294,6 +295,38 @@ static struct pi_hsk
 }hsk;
 
 
+static int dispatch_nullable_double(const char * n, sd_json_variant *v, sd_json_dispatch_flags_t f, void *u)
+{
+  if (sd_json_variant_is_null(v))
+  {
+    *((double*)u) = NAN;
+    return 0;
+  }
+  return sd_json_dispatch_double(n,v,f,u);
+}
+
+static int dispatch_nullable_int(const char * n, sd_json_variant *v, sd_json_dispatch_flags_t f, void *u)
+{
+  if (sd_json_variant_is_null(v))
+  {
+    *((int*)u) = 0;
+    return 0;
+  }
+  return sd_json_dispatch_int(n,v,f,u);
+}
+
+/*
+static int dispatch_nullable_intbool(const char * n, sd_json_variant *v, sd_json_dispatch_flags_t f, void *u)
+{
+  if (sd_json_variant_is_null(v))
+  {
+    *((int*)u) = 0;
+    return 0;
+  }
+  return sd_json_dispatch_intbool(n,v,f,u);
+}
+*/
+
 static void update_hsk()
 {
 #ifndef HAVE_SD_JSON
@@ -309,9 +342,15 @@ static void update_hsk()
     return;
   }
 
-#define X_DBL_DISPATCH(X) {#X , SD_JSON_VARIANT_NUMBER, sd_json_dispatch_double, offsetof(struct pi_hsk, X), SD_JSON_NULLABLE},
-#define X_INT_DISPATCH(X) {#X , SD_JSON_VARIANT_NUMBER, sd_json_dispatch_int32, offsetof(struct pi_hsk, X), SD_JSON_NULLABLE},
-#define X_BOOL_DISPATCH(X) {#X , SD_JSON_VARIANT_BOOLEAN, sd_json_dispatch_stdbool, offsetof(struct pi_hsk, X) SD_JSON_NULLABLE},
+
+
+
+
+
+
+#define X_DBL_DISPATCH(X) {#X , _SD_JSON_VARIANT_TYPE_INVALID, dispatch_nullable_double, offsetof(struct pi_hsk, X), SD_JSON_NULLABLE},
+#define X_INT_DISPATCH(X) {#X , _SD_JSON_VARIANT_TYPE_INVALID, dispatch_nullable_int, offsetof(struct pi_hsk, X), SD_JSON_NULLABLE},
+#define X_BOOL_DISPATCH(X) {#X , _SD_JSON_VARIANT_TYPE_INVALID, dispatch_nullable_intbool, offsetof(struct pi_hsk, X) SD_JSON_NULLABLE},
 
   static const sd_json_dispatch_field table [] = {
   HSK_FIELDS(X_DBL_DISPATCH, X_BOOL_DISPATCH, X_INT_DISPATCH)

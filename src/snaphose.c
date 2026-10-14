@@ -126,7 +126,9 @@ static struct
   uint32_t clk_cnts;
   uint32_t pps_duration;
   uint32_t pps_counter;
+  uint32_t threshold;
   uint32_t toggle;
+  uint32_t sys_rev;
 } reg;
 
 const char * setup_file = "/etc/snaphose.ini" ;
@@ -201,6 +203,8 @@ static int setup_handler(void * user, const char * section, const char * name, c
     else PARSE_REG(pps_duration)
     else PARSE_REG(pps_counter)
     else PARSE_REG(toggle)
+    else PARSE_REG(threshold)
+    else PARSE_REG(sys_rev)
     else
     {
       fprintf(stderr, "Unknown key %s.%s\n", section,name);
@@ -439,7 +443,7 @@ int main(int nargs, char ** args)
   }
 
   //validate regs
-  if (!reg.accum_len || !reg.valid_counts || !reg.total_counts || !reg.clk_cnts || !reg.pps_duration || !reg.pps_counter || !reg.toggle )
+  if (!reg.accum_len || !reg.valid_counts || !reg.total_counts || !reg.clk_cnts || !reg.pps_duration || !reg.pps_counter || !reg.toggle || !reg.threshold )
   {
     fprintf(stderr,"ruhroh, one or more regs not defined. It would be nice if I told you which one(s) wouldn't it?\n");
     return 1;
@@ -1000,6 +1004,8 @@ static int snap_arm(size_t i)
   return 0;
 }
 
+static uint32_t sys_rev =0;
+
 
 static void*  read_thread(void * v)
 {
@@ -1028,6 +1034,8 @@ static void*  read_thread(void * v)
        hb(&tick_read);
     }
 
+    if (reg.sys_rev) read_reg(reg.sys_rev, &sys_rev);
+    printf("Sysrev: %x\n", sys_rev);
     read_reg(reg.accum_len, &accum_len);
     size_t start_snap = 0;
     //grab an available buffer

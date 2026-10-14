@@ -294,6 +294,7 @@ static struct pi_hsk
   HSK_FIELDS(X_DBL_DEF,X_BOOL_DEF, X_INT_DEF)
 }hsk;
 
+#ifdef HAVE_SD_JSON
 
 static int dispatch_nullable_double(const char * n, sd_json_variant *v, sd_json_dispatch_flags_t f, void *u)
 {
@@ -326,6 +327,7 @@ static int dispatch_nullable_intbool(const char * n, sd_json_variant *v, sd_json
   return sd_json_dispatch_intbool(n,v,f,u);
 }
 */
+#endif
 
 static void update_hsk()
 {

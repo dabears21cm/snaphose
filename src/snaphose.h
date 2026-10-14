@@ -61,7 +61,7 @@ typedef struct snaphose_data
  uint32_t fw_ver_major : 8;
  uint32_t fw_ver_minor : 8;
  uint32_t fw_ver_rev : 8;
- uint32_t fft_is_real : 8;
+ uint32_t fft_is_real : 1;
  uint32_t npad_bits_set :1; //for backwards compatibility, assume 16 if not set
  uint32_t npad_bits : 6;
 

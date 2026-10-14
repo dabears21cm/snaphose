@@ -367,11 +367,19 @@ static void update_hsk()
 }
 
 
+static size_t sz = 0;
 static int fds[3] = {-1,-1,-1};
 static uint32_t nwritten[3] = {0};
 static uint32_t started[3] = {0};
 static void close_file(int fd_index)
 {
+  if (nwritten[fd_index] < spec_per_file)
+  {
+    if (ftruncate(fds[fd_index], nwritten[fd_index]  * sz))
+    {
+        fprintf(stderr,"Couldn't truncate\n");
+    }
+  }
   printf("Closing %s\n", current_filename[fd_index]);
   fflush(stdout);
   close(fds[fd_index]);
@@ -393,7 +401,6 @@ static void close_file(int fd_index)
 int main(int nargs, char ** args)
 {
 
-  size_t sz = 0;
 
 
   struct timespec program_start;

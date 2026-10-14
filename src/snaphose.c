@@ -1052,7 +1052,11 @@ static void*  read_thread(void * v)
         for (size_t isnap = 0; isnap < nblocks; isnap++)
         {
           setup[isnap].captures_since_drain = 0;
+
+          volatile uint64_t * start_word = (volatile uint64_t*) &fpga[setup[isnap].bram];
+          volatile uint64_t * end_word = start_word + (data_bits*nsamples)/64;
           snap_arm(isnap);
+          *end_word = 0x123456789abcdefLLU;
         }
 
         // we have reset everything
@@ -1101,12 +1105,11 @@ static void*  read_thread(void * v)
           //memcpy might not work here, so read one word at a time? 
 
 #if 1
-          volatile uint64_t * start_word = (volatile uint64_t*) &fpga[setup[isnap].bram];
+          const volatile uint64_t * start_word = (volatile uint64_t*) &fpga[setup[isnap].bram];
           uint64_t *output  =(uint64_t*) &d->packed_samples[0];
 
-          volatile uint64_t * stop_word = start_word + (data_bits*nsamples)/64;
- 
-          for (volatile uint64_t * word = start_word; word < stop_word; )
+          const volatile uint64_t * stop_word = start_word + (data_bits*nsamples)/64;
+          for (const volatile uint64_t * word = start_word; word < stop_word; )
           {
             *output++ = *word++;
           }

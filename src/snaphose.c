@@ -90,6 +90,7 @@ static bool udp_broadcast;
 static uint16_t tcp_control_port;
 static bool verbose;
 static bool reread_status;
+static bool real_fft;
 static uint32_t nsamples = 2048;
 static uint32_t data_bits = 64;
 static uint32_t pad_bits = 16;
@@ -97,6 +98,7 @@ static uint32_t buffer_size = 256;
 static uint32_t buffer_size_mask = 0xff;
 static int watchdog_interval = 10;
 static uint32_t accum_len = 0;
+static uint32_t sys_rev =0;
 static uint32_t print_every = 0;
 static uint32_t verify_words = 8;
 static uint32_t stats_interval = 10;
@@ -261,6 +263,7 @@ static int setup_handler(void * user, const char * section, const char * name, c
     else if (!strcmp(name,"data_width")) data_bits = atoi(val);
     else if (!strcmp(name,"pad_bits")) pad_bits = atoi(val);
     else if (!strcmp(name,"reread_status")) return !boolish(val,&reread_status);
+    else if (!strcmp(name,"fft_is_real")) return !boolish(val,&real_fft);
     else 
     {
       fprintf(stderr,"Invalid key %s in %s\n", name, section);
@@ -753,10 +756,10 @@ static void* tx_thread(void *p)
       d->ver_magic = SNAPHOSE_VER_MAGIC;
       d->nfreqbins = nsamples;
       d->nbits_per_bin = data_bits;
-      //TODO future firmware should set these...
-      d->fw_ver_major = 0;
-      d->fw_ver_minor = 0;
-      d->fw_ver_rev = 0;
+      d->fw_ver_major = sys_rev  >> 16;
+      d->fw_ver_minor = (sys_rev  >> 8) & 0xff;;
+      d->fw_ver_rev = sys_rev & 0xff;;
+      d->fft_is_real = real_fft;
       d->npad_bits_set = 1;
       d->npad_bits = pad_bits;
       d->accum_length = accum_len;
@@ -1004,7 +1007,6 @@ static int snap_arm(size_t i)
   return 0;
 }
 
-static uint32_t sys_rev =0;
 
 
 static void*  read_thread(void * v)

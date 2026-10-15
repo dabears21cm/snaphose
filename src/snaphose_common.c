@@ -29,7 +29,7 @@ int snaphose_dump(FILE * f, const snaphose_data_t * s)
     double freq = 0;
     if (s->fft_is_real)
     {
-      freq = (i * 125.) / s->nfreqbins;
+      freq = (i * 125.) / (2*s->nfreqbins);
     }
     else
     {

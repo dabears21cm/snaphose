@@ -98,7 +98,7 @@ static uint32_t buffer_size = 256;
 static uint32_t buffer_size_mask = 0xff;
 static int watchdog_interval = 10;
 static uint32_t accum_len = 0;
-static uint32_t sys_rev =0;
+static uint32_t fw_id =0;
 static uint32_t print_every = 0;
 static uint32_t verify_words = 8;
 static uint32_t stats_interval = 10;
@@ -130,7 +130,7 @@ static struct
   uint32_t pps_counter;
   uint32_t threshold;
   uint32_t toggle;
-  uint32_t sys_rev;
+  uint32_t fw_id;
 } reg;
 
 const char * setup_file = "/etc/snaphose.ini" ;
@@ -206,7 +206,7 @@ static int setup_handler(void * user, const char * section, const char * name, c
     else PARSE_REG(pps_counter)
     else PARSE_REG(toggle)
     else PARSE_REG(threshold)
-    else PARSE_REG(sys_rev)
+    else PARSE_REG(fw_id)
     else
     {
       fprintf(stderr, "Unknown key %s.%s\n", section,name);
@@ -756,9 +756,9 @@ static void* tx_thread(void *p)
       d->ver_magic = SNAPHOSE_VER_MAGIC;
       d->nfreqbins = nsamples;
       d->nbits_per_bin = data_bits;
-      d->fw_ver_major = sys_rev  >> 16;
-      d->fw_ver_minor = (sys_rev  >> 8) & 0xff;;
-      d->fw_ver_rev = sys_rev & 0xff;;
+      d->fw_ver_major = fw_id  >> 16;
+      d->fw_ver_minor = (fw_id  >> 8) & 0xff;;
+      d->fw_ver_rev = fw_id & 0xff;;
       d->fft_is_real = real_fft;
       d->npad_bits_set = 1;
       d->npad_bits = pad_bits;
@@ -1036,8 +1036,8 @@ static void*  read_thread(void * v)
        hb(&tick_read);
     }
 
-    if (reg.sys_rev) read_reg(reg.sys_rev, &sys_rev);
-    printf("Sysrev: %x\n", sys_rev);
+    if (reg.fw_id) read_reg(reg.fw_id, &fw_id);
+    printf("fwid: %x\n", fw_id);
     read_reg(reg.accum_len, &accum_len);
     size_t start_snap = 0;
     //grab an available buffer

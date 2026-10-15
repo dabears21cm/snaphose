@@ -36,7 +36,7 @@ int snaphose_dump(FILE * f, const snaphose_data_t * s)
       freq = ((i < s->nfreqbins/2) ? i : i-s->nfreqbins  ) * 125./ (s->nfreqbins);
 
     }
-    out += fprintf(f, "                %f MHz: %0.3f dBm/Hz / %012"PRIx64" \n",freq,dB, val);
+    out += fprintf(f, "                %f MHz: %0.3f dBm/Hz / %013"PRIx64" \n",freq,dB, val);
   }
 
   out += fprintf(f, "                               }\n");

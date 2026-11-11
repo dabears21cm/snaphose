@@ -98,7 +98,7 @@ int snaphose_unpack_samples_f32(const snaphose_data_t * s,  uint32_t dest_sz,  f
 
 #if (__GNUC__ > 8)
 #pragma GCC unroll 4
-    for (; i <= dest_sz; i+=  (SIMD_BYTES / 8))
+    for (; i < dest_sz; i+=  (SIMD_BYTES / 8))
     {
       u64_vec chunk;
       __builtin_memcpy(&chunk, &as_u64[i], sizeof(u64_vec));
@@ -119,7 +119,7 @@ int snaphose_unpack_samples_f32(const snaphose_data_t * s,  uint32_t dest_sz,  f
 
 #if (__GNUC__ > 8)
 #pragma GCC unroll 4
-    for (; i <= dest_sz; i+=  (SIMD_BYTES / 4))
+    for (; i < dest_sz; i+=  (SIMD_BYTES / 4))
     {
       u32_vec chunk;
       __builtin_memcpy(&chunk, &as_u32[i], sizeof(u32_vec));

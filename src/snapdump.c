@@ -1,8 +1,10 @@
+#define _GNU_SOURCE
 #include "snaphose.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <string.h>
 #include <errno.h>
 #include <unistd.h>
 
@@ -21,7 +23,27 @@ int main(int nargs, char ** args)
 
   for (int i = 1; i < nargs; i++)
   {
-    FILE * f =  fopen(args[i], "r");
+
+    FILE *  f = NULL;
+    int  (*closefn) ( FILE *) = NULL;
+    // see if we need to decompress
+
+    if (!strcmp(".zst", args[i] + (strlen(args[i]) - 4)))
+    {
+      char * cmd = NULL;
+      asprintf(&cmd, "zstd -dc %s", args[i]);
+      f = popen(cmd,"r");
+      closefn = pclose;
+      free(cmd);
+
+
+    }
+    else
+    {
+      f =  fopen(args[i], "r");
+      closefn = fclose;
+    }
+
 
     if (!f) 
     {
@@ -54,7 +76,7 @@ int main(int nargs, char ** args)
       snaphose_dump(stdout, &d.d);
     }
 
-    fclose(f);
+    closefn(f);
   }
 
 

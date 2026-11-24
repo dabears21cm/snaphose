@@ -74,6 +74,7 @@ int main(int nargs, char ** args)
 
       if (1 != fread(d.dbuf, sizeof(snaphose_data_t), 1, f))
       {
+        if (feof(f)) break;
         fprintf(stderr,"Problem reading header. We probably won't recover from this\n");
         continue;
       }

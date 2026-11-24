@@ -1,5 +1,5 @@
 CC?=gcc
-CFLAGS?=-Os -g -Wall -Werror -pedantic
+CFLAGS?=-Os -g -Wall -Werror -pedantic -fopenmp
 EXTRA_CFLAGS=-fPIC -fanalyzer -march=native -pthread
 
 # because an older compiler might not support everything grumble,grumble
@@ -26,6 +26,8 @@ SNAPHOSE_OBJS=$(addprefix $(BUILD_DIR)/, snaphose.o snaphose_common.o ini.o)
 LIB_OBJS=$(addprefix $(BUILD_DIR)/,  snaphose_common.o)
 SNAPSAVE_OBJS=$(addprefix $(BUILD_DIR)/,  snapsave.o snaphose_common.o ini.o )
 SNAPDUMP_OBJS=$(addprefix $(BUILD_DIR)/,  snapdump.o snaphose_common.o )
+DABEARS2WAV_OBJS=$(addprefix $(BUILD_DIR)/,  dabears2wav.o sonify.o snaphose_common.o )
+SNAPHOSE2TIFF_OBJS =$(addprefix $(BUILD_DIR)/,  snaphose2tiff.o snaphose_common.o )
 
 $(BUILD_DIR):
 	mkdir -p $@
@@ -44,6 +46,13 @@ snapsave: $(SNAPSAVE_OBJS)
 
 snapdump: $(SNAPDUMP_OBJS)
 	$(CC) -o $@ $^ $(SNAPHOSE_LIBS)
+
+dabears2wav: $(DABEARS2WAV_OBJS)
+	$(CC) -o $@ $^ $(SNAPHOSE_LIBS) -lsndfile
+
+snaphose2tiff: $(SNAPHOSE2TIFF_OBJS)
+	$(CC) -o $@ $^ $(SNAPHOSE_LIBS) -ltiff
+
 
 libsnaphose.so: $(LIB_OBJS)
 	$(CC) -o $@ -shared $^
